@@ -12,6 +12,8 @@
 .feature-root:hover{
     transform: scale(1.05);
     transition: transform 0.3s;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5);
+
 }
 
 .feature-icon {
@@ -22,7 +24,7 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	border: 1px solid #f4f4f5;
+	border: 1px solid #063b1e;
 }
 .feature-title {
 	font-size: 2rem;
