@@ -1,1 +1,23 @@
 @import "tailwindcss";
+
+@theme {
+    --color-brand-green: #063b1e;
+    --color-brand-green-light: #6eff8a;
+    --color-green-primary: #6eff8a;
+    --color-green-secondary: #6eff8a;
+    --color-brand-white: #fcfcfc;
+    
+    /* Custom breakpoint for extra-small screens */
+    --breakpoint-xs: 480px;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+    scroll-behavior: smooth;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+}
