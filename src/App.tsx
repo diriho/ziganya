@@ -1,5 +1,6 @@
 import Home from "./pages/Home"
 
+import { Dashboard } from "./components/Dashboard";
 function App() {
   return(
     <div >
