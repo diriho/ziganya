@@ -3,11 +3,7 @@
 @theme {
     --color-brand-green: #063b1e;
     --color-brand-green-light: #6eff8a;
-    --color-green-primary: #6eff8a;
-    --color-green-secondary: #6eff8a;
     --color-brand-white: #fcfcfc;
-    
-    /* Custom breakpoint for extra-small screens */
     --breakpoint-xs: 480px;
 }
 

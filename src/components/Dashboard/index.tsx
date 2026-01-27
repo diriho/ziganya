@@ -10,7 +10,7 @@ export const Dashboard = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     return (
-        <div className="flex min-h-screen bg-[#f0f2f0]">
+        <div className="flex min-h-screen bg-brand-white">
             {/* Sidebar on the left */}
             <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
 

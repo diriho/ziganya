@@ -31,7 +31,7 @@ export default function Home() {
               </p>
               <div className="home-hero-actions">
                 <Button type="button" variant="primary" className="getting_started-btn">
-                  Get Started
+                  <a href="/dashboard">Get Started</a>
                   <ArrowRight className="home-arrow-icon" />
                 </Button>
                 <Button type="button" variant="secondary" className="see_how-btn">
@@ -76,7 +76,7 @@ export default function Home() {
               Take control of your cash.<br />Starting today.
             </h2>
             <Button type="button" variant="primary" className="start_now-btn">
-              Get Started Now
+              <a href="/dashboard">Get Started</a>
             </Button>
           </div>
         </section>
