@@ -68,18 +68,18 @@
 	color: #063b1e;
 }
 
-.header-download-icon {
+.header-sign-in-icon {
 	fill: #6eff8a;
 	color: #6eff8a;
 }
 
-.header-download-text {
+.header-sign-in-text {
 	font-size: 14px;
 	font-weight: bold;
 	color: #6eff8a;
 }
 
-.download-btn {
+.sign-in_btn {
     display: flex;
     align-items: center;
     gap: 2px;
@@ -91,12 +91,12 @@
     transition: background 0.2s;
 }
 
-.download-btn:hover {
+.sign-in_btn:hover {
     background: black;
     transition: all 0.2s;
 
 }
 
-.download-btn:active {
+.sign-in_btn:active {
     scale: 0.2;
 }
