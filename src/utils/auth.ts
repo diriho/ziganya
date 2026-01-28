@@ -1,4 +1,4 @@
-import { signInWithPopup } from "firebase/auth";
+import { signInWithPopup, signOut } from "firebase/auth";
 import { auth, googleProvider } from "../firebase/firebaseConfig";
 
 export async function signInWithGoogle(navigate: (path: string) => void) {
@@ -7,5 +7,13 @@ export async function signInWithGoogle(navigate: (path: string) => void) {
     navigate("/login");
   } catch (err) {
     console.error("Google sign-in failed", err);
+  }
+}
+
+export async function signOutUser() {
+  try {
+    await signOut(auth);
+  } catch (err) {
+    console.error("Sign-out failed", err);
   }
 }

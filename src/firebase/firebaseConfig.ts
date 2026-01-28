@@ -5,13 +5,13 @@ import { getFirestore } from "firebase/firestore";
 
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCtzfnfk5vkYOfKsehymqksTT9ArLGECRs",
-  authDomain: "ziganya-d26c1.firebaseapp.com",
-  projectId: "ziganya-d26c1",
-  storageBucket: "ziganya-d26c1.firebasestorage.app",
-  messagingSenderId: "771399655388",
-  appId: "1:771399655388:web:3dfded40f1dda0320cb919",
-  measurementId: "G-2HVVX549BW"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
@@ -20,19 +20,5 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 const db = getFirestore(app);
-
-/**
- * Ensure a user is signed in before performing an action.
- * If not signed in, redirect to /login and return false.
- * Returns true when a user is signed in.
- */
-export function ensureSignedIn(): boolean {
-  if (!auth.currentUser) {
-    // hard redirect to the login page
-    window.location.href = "/login";
-    return false;
-  }
-  return true;
-}
 
 export { app, auth, googleProvider, db };

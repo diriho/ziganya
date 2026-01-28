@@ -100,3 +100,10 @@
 .sign-in_btn:active {
     scale: 0.2;
 }
+
+.sign-out_btn {
+    display: flex; 
+	align-items: center; 
+	gap: 0.5rem;
+	padding: 0.5rem 1rem;
+}

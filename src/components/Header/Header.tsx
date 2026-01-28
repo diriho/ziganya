@@ -1,15 +1,34 @@
+import { useState, useEffect } from 'react';
 import Button from '../Button/Button';
 import './Header.css';
-import { useNavigate } from 'react-router-dom';
-import { Apple } from 'lucide-react';
-import { signInWithGoogle } from '../../utils/auth';
+import { Apple, LogOut } from 'lucide-react';
+import Login from '../../pages/Login';
+import { auth } from '../../firebase/firebaseConfig';
+import { onAuthStateChanged } from 'firebase/auth';
+import type { User } from 'firebase/auth';
+import { signOutUser } from '../../utils/auth';
 
 const Header = () => {
-  const navigate = useNavigate();
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        setIsLoginOpen(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleSignIn = () => {
-    signInWithGoogle(navigate);
+    setIsLoginOpen(true);
   }
+
+  const handleSignOut = async () => {
+    await signOutUser();
+  };
 
   return (
     <nav className="header-nav">
@@ -23,16 +42,35 @@ const Header = () => {
           <a href="#" className="header-link">About</a>
           <a href="#" className="header-link">Contact</a>
         </div>
-        <Button
-          type="button"
-          variant="primary"
-          className="sign-in_btn"
-          onClick={handleSignIn}
-        >
-          <Apple size={16} className="header-sign-in-icon" />
-          <span className="header-sign-in-text">Sign In</span>
-        </Button>
+        
+        {user ? (
+          <div className="header-user-section" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+             <span className="header-user-greeting" style={{ fontWeight: 600, fontSize: '14px', color: '#000' }}>
+              Hi, {user.displayName ? user.displayName.split(' ')[0] : 'User'}
+            </span>
+            <Button
+              type="button"
+              variant="primary"
+              className="sign-in_btn" 
+              onClick={handleSignOut}
+            >
+              <LogOut size={16} className="header-sign-in-icon" />
+              <span className="header-sign-in-text">Sign Out</span>
+            </Button>
+          </div>
+        ) : (
+          <Button
+            type="button"
+            variant="primary"
+            className="sign-in_btn"
+            onClick={handleSignIn}
+          >
+            <Apple size={16} className="header-sign-in-icon" />
+            <span className="header-sign-in-text">Sign In</span>
+          </Button>
+        )}
       </div>
+      <Login isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
     </nav>
   );
 };
