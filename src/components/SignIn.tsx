@@ -9,7 +9,6 @@ import type { User } from "firebase/auth";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, googleProvider, db } from "../firebase/firebaseConfig";
 import { Chrome } from "lucide-react";
-import "../pages/Login.css"; // Reuse the css created
 
 interface SignInProps {
   onSuccess?: () => void;
@@ -85,54 +84,50 @@ const SignIn = ({ onSuccess }: SignInProps) => {
   }
 
   return (
-    <div style={{ fontFamily: "sans-serif" }}>
+    <div className="font-sans">
         <div>
-          <h3 style={{ margin: "0 0 16px 0", textAlign: "center", color: "white",
-    fontSize: "1rem", fontWeight: "bold" }}>Sign in</h3>
+          <h3 className="text-center text-white text-base font-bold mb-4">Sign in</h3>
           
           <form onSubmit={handleEmailSignIn}>
             <input 
-              className="auth-input"
+              className="w-full p-2.5 mb-3 border border-[#ddd] rounded box-border text-white bg-transparent placeholder-gray-400"
               value={email} 
               onChange={(e) => setEmail(e.target.value)} 
               placeholder="Email" 
               type="email" 
               required 
-              style={{ color: "white" }}
             />
-            <div style={{ marginTop: 8 }}>
+            <div className="mt-2">
               <input 
-                className="auth-input"
+                className="w-full p-2.5 mb-3 border border-[#ddd] rounded box-border text-white bg-transparent placeholder-gray-400"
                 value={password} 
                 onChange={(e) => setPassword(e.target.value)} 
                 placeholder="Password" 
                 type="password" 
                 required
-                style={{ color: "white" }}
               />    
             </div>
-            <div style={{ marginTop: 12, display: "flex", gap: "8px" }}>
-              <button type="submit" className="auth-submit-btn" disabled={loading}>Sign in</button>
+            <div className="mt-3 flex gap-2">
+              <button type="submit" className="w-full p-2.5 bg-[#007bff] text-white border-none rounded cursor-pointer font-bold hover:bg-[#0056b3] disabled:opacity-50" disabled={loading}>Sign in</button>
               <button 
                 type="button" 
                 onClick={handleRegister} 
                 disabled={loading} 
-                className="auth-submit-btn"
-                style={{ backgroundColor: "#28a745" }} // distinct green for register
+                className="w-full p-2.5 bg-[#28a745] text-white border-none rounded cursor-pointer font-bold hover:bg-[#218838] disabled:opacity-50"
               >
                 Register
               </button>
             </div>
           </form>
 
-          <div className="auth-separator">or</div>
+          <div className="my-4 text-center text-[#666] text-sm">or</div>
 
-          <button className="google-btn" onClick={handleGoogleSignIn} disabled={loading}>
+          <button className="flex items-center justify-center gap-2.5 w-full p-2.5 mt-4 bg-white border border-[#ddd] rounded cursor-pointer font-inherit hover:bg-[#f9f9f9] disabled:opacity-50" onClick={handleGoogleSignIn} disabled={loading}>
             <Chrome size={20} />
             <span>Sign in with Google</span>
           </button>
 
-          {error && <div style={{ marginTop: 12, color: "crimson", textAlign: "center" }}><small>{error}</small></div>}
+          {error && <div className="mt-3 text-[crimson] text-center text-sm"><small>{error}</small></div>}
         </div>
     </div>
   );
