@@ -17,42 +17,54 @@ import { UpgradeCard } from "./UpgradeCard";
 interface SidebarProps {
   isOpen?: boolean;
   setIsOpen?: (isOpen: boolean) => void;
+  activeItem?: string;
+  onItemSelect?: (item: string) => void;
 }
 
 export const Sidebar = (props: SidebarProps = {}) => {
-  const { isOpen: externalIsOpen, setIsOpen: externalSetIsOpen } = props;
+  const { 
+      isOpen: externalIsOpen, 
+      setIsOpen: externalSetIsOpen,
+      activeItem: externalActiveItem,
+      onItemSelect
+  } = props;
+  
   const [internalIsOpen, setInternalIsOpen] = useState(true);
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
   const setIsOpen = externalSetIsOpen ? (value: boolean) => externalSetIsOpen(value) : setInternalIsOpen;
-  const [activeItem, setActiveItem] = useState<{ section: string; item: string }>({
-    section: 'Menu',
-    item: 'Dashboard'
-  });
+  
+  // Use internal state if no external state provided, otherwise use external
+  const [internalActiveItem, setInternalActiveItem] = useState('Dashboard');
+  const activeItem = externalActiveItem !== undefined ? externalActiveItem : internalActiveItem;
+
+  const handleItemClick = (sectionTitle: string, itemText: string) => {
+    if (onItemSelect) {
+        onItemSelect(itemText);
+    } else {
+        setInternalActiveItem(itemText);
+    }
+  };
 
   const menuSections = useMemo(() => [
       {
           title: 'Menu',
           items: [
-              { icon: <LayoutDashboard size={20} />, text: 'Dashboard', active: activeItem.section === 'Menu' && activeItem.item === 'Dashboard' },
-              { icon: <Receipt size={20} />, text: "Transactions", active: activeItem.section === 'Menu' && activeItem.item === 'Transactions' },
-              { icon: <Calendar size={20} />, text: 'Calendar', active: activeItem.section === 'Menu' && activeItem.item === 'Calendar' },
-              { icon: <CreditCard size={20} />, text: 'Subscriptions', active: activeItem.section === 'Menu' && activeItem.item === 'Subscriptions' }
+              { icon: <LayoutDashboard size={20} />, text: 'Dashboard', active: activeItem === 'Dashboard' },
+              { icon: <Receipt size={20} />, text: "Transactions", active: activeItem === 'Transactions' },
+              { icon: <Calendar size={20} />, text: 'Calendar', active: activeItem === 'Calendar' },
+              { icon: <CreditCard size={20} />, text: 'Subscriptions', active: activeItem === 'Subscriptions' }
           ],
           hasActiveState: true
       },
       {
           title: 'General',
           items: [
-              { icon: <Settings size={20} />, text: 'Settings', active: activeItem.section === 'General' && activeItem.item === 'Settings' },
-              { icon: <LogOut size={20} />, text: 'Logout', active: activeItem.section === 'General' && activeItem.item === 'Logout' }
+              { icon: <Settings size={20} />, text: 'Settings', active: activeItem === 'Settings' },
+              { icon: <LogOut size={20} />, text: 'Logout', active: activeItem === 'Logout' }
           ],
           hasActiveState: false
       }
   ], [activeItem]);
-
-  const handleItemClick = (sectionTitle: string, itemText: string) => {
-    setActiveItem({ section: sectionTitle, item: itemText });
-  };
 
 
   return (

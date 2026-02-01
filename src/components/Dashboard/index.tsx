@@ -1,27 +1,30 @@
 import { useState } from "react";
 import { Sidebar } from "../Sidebar";
+import SettingsPage from "../Settings";
 import { Header } from "./Header";
 import { InfoCard } from "./InfoCard";
 import { SpendingAnalytics } from "./SpendingAnalytics";
 import { RecentActivities } from "./RecentActivities";
 import {Budget} from "./Budget";
 import { Subscriptions } from "./Subscriptions";
+
 export const Dashboard = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [activeTab, setActiveTab] = useState("Dashboard");
 
-    return (
-        <div className="flex min-h-screen bg-brand-white">
-            {/* Sidebar on the left */}
-            <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
-
-            {/* Main content area - full width to scroll under sidebar */}
-            <main className="flex-1 w-full">
-                <div className={`p-3 sm:p-4 md:p-6 transition-all duration-300 ease-in-out ${
+    const renderContent = () => {
+        if (activeTab === "Settings") {
+            return (
+                <div className={`transition-all duration-300 ease-in-out ${
                     isSidebarOpen ? 'md:ml-64 lg:ml-72' : 'ml-0'
                 }`}>
-                    <Header isSidebarOpen={isSidebarOpen} />
+                    <SettingsPage />
                 </div>
+            );
+        }
 
+        return (
+            <>
                 {/* Horizontally scrollable InfoCards section - starts from left edge, scrolls under sidebar */}
                 <div className="relative w-full">
                     {/* Cards container - scrolls horizontally from left edge, under sidebar */}
@@ -93,8 +96,29 @@ export const Dashboard = () => {
                         </div>
                     </div>
                 </div>
+            </>
+        );
+    };
 
+    return (
+        <div className="flex min-h-screen dark:bg-[#eeefeb]">
+            {/* Sidebar on the left */}
+            <Sidebar 
+                isOpen={isSidebarOpen} 
+                setIsOpen={setIsSidebarOpen}
+                activeItem={activeTab}
+                onItemSelect={setActiveTab}
+            />
 
+            {/* Main content area - full width to scroll under sidebar */}
+            <main className="flex-1 w-full">
+                <div className={`p-3 sm:p-4 md:p-6 transition-all duration-300 ease-in-out ${
+                    isSidebarOpen ? 'md:ml-64 lg:ml-72' : 'ml-0'
+                }`}>
+                    <Header isSidebarOpen={isSidebarOpen} />
+                </div>
+
+                {renderContent()}
             </main>
         </div>
     )
