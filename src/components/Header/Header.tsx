@@ -2,9 +2,8 @@ import { useState, useEffect } from 'react';
 import Button from '../Button/Button';
 import { Apple, LogOut } from 'lucide-react';
 import Login from '../../pages/Login';
-import { auth } from '../../firebase/firebaseConfig';
-import { onAuthStateChanged } from 'firebase/auth';
-import type { User } from 'firebase/auth';
+import supabase from '../../supabase/supabaseConfig';
+import type { User } from '@supabase/supabase-js';
 import { signOutUser } from '../../utils/auth';
 
 const Header = () => {
@@ -12,13 +11,18 @@ const Header = () => {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      if (currentUser) {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
         setIsLoginOpen(false);
       }
     });
-    return () => unsubscribe();
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleSignIn = () => {
@@ -45,7 +49,7 @@ const Header = () => {
         {user ? (
           <div className="flex items-center gap-4">
              <span className="font-semibold text-sm text-black">
-              Hi, {user.displayName ? user.displayName.split(' ')[0] : 'User'}
+              Hi, {user.user_metadata?.full_name ? user.user_metadata.full_name.split(' ')[0] : 'User'}
             </span>
             <Button
               type="button"

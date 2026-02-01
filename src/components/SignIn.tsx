@@ -1,13 +1,7 @@
 
 import React, { useState } from "react";
-import {
-  signInWithPopup,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-} from "firebase/auth";
-import type { User } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { auth, googleProvider, db } from "../firebase/firebaseConfig";
+import googleSignIn_Logic from "../utils/googleAuth";
+import emailPassword_Logic from "../utils/EmailPassword";
 import { Chrome } from "lucide-react";
 
 interface SignInProps {
@@ -20,67 +14,45 @@ const SignIn = ({ onSuccess }: SignInProps) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function createOrUpdateUserDoc(u: User) {
-    try {
-      const ref = doc(db, "users", u.uid);
-      await setDoc(
-        ref,
-        { uid: u.uid, email: u.email ?? null, displayName: u.displayName ?? null, lastSeen: serverTimestamp() },
-        { merge: true }
-      );
-    } catch (err) {
-      console.error("Failed to write user doc", err);
-    }
-  }
-
   async function handleGoogleSignIn() {
     setError(null);
     setLoading(true);
-    try {
-      const res = await signInWithPopup(auth, googleProvider);
-      if (res.user) {
-        await createOrUpdateUserDoc(res.user);
-        if (onSuccess) onSuccess();
-      }
-    } catch (err: any) {
-      setError(err?.message ?? "Google sign-in failed");
-    } finally {
-      setLoading(false);
+    const { error } = await googleSignIn_Logic();
+    if (error) {
+       setError(error);
     }
+    // Note: This will trigger a redirect, so subsequent code might not execute in this session context.
+    setLoading(false);
   }
 
   async function handleEmailSignIn(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    try {
-      const cred = await signInWithEmailAndPassword(auth, email, password);
-      if (cred.user) {
-        await createOrUpdateUserDoc(cred.user);
-        if (onSuccess) onSuccess();
-      }
-    } catch (err: any) {
-      setError(err?.message ?? "Email sign-in failed");
-    } finally {
-      setLoading(false);
+    
+    const { user, error } = await emailPassword_Logic.signIn(email, password);
+    
+    if (error) {
+        setError(error);
+    } else if (user && onSuccess) {
+        onSuccess();
     }
+    setLoading(false);
   }
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    try {
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-      if (cred.user) {
-        await createOrUpdateUserDoc(cred.user);
-        if (onSuccess) onSuccess();
-      }
-    } catch (err: any) {
-      setError(err?.message ?? "Registration failed");
-    } finally {
-      setLoading(false);
+    
+    const { user, error } = await emailPassword_Logic.register(email, password);
+    
+    if (error) {
+        setError(error);
+    } else if (user && onSuccess) {
+        onSuccess();
     }
+    setLoading(false);
   }
 
   return (
