@@ -28,7 +28,11 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@db/*": ["./sdk/db/*"]
+      "@sdk/db": ["./sdk/db"],
+      "@sdk/db/*": ["./sdk/db/*"],
+      "@sdk/requests": ["./sdk/requests"],
+      "@sdk/requests/*": ["./sdk/requests/*"]
+
     }
   },
   "include": ["src", "sdk"]

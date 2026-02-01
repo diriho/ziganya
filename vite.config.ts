@@ -6,10 +6,15 @@ import path from 'path'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  define: {
+    "import.meta.env.SSR": "false",
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@db': path.resolve(__dirname, './sdk/db'),
+      '@sdk/db': path.resolve(__dirname, './sdk/db'),
+      "@sdk/requests": path.resolve(__dirname, "./sdk/requests/"),
+      module: path.resolve(__dirname, "vite-module-stub.js"),
     },
   },
 })

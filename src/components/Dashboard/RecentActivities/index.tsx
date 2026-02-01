@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { MoreHorizontal, Receipt, Smartphone, CreditCard, Upload, X, Check } from "lucide-react";
+import { MoreHorizontal, Receipt, Smartphone, Upload, X, Check } from "lucide-react";
 
 interface ActivityItemProps {
     icon: React.ReactNode;

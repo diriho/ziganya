@@ -1,5 +1,5 @@
 // Re-export everything from one place
-export { supabase } from "./database";
+export * from "./database";
 export type {
   Database,
   Transaction,

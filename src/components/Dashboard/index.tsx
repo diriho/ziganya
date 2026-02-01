@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSubscriptions, useTransactions } from "@sdk/requests";
 import { Sidebar } from "../Sidebar";
 import { Header } from "./Header";
 import { InfoCard } from "./InfoCard";
@@ -6,9 +7,19 @@ import { SpendingAnalytics } from "./SpendingAnalytics";
 import { RecentActivities } from "./RecentActivities";
 import {Budget} from "./Budget";
 import { Subscriptions } from "./Subscriptions";
+
+
 export const Dashboard = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const userId = import.meta.env.VITE_TEST_USER;
+    // const { data: budgets, isLoading: budgetsLoading } = useBudgets(userId);
+    const { data: subscriptions, isLoading: subsLoading } = useSubscriptions(userId);
+    const { data: transactions, isLoading: txLoading } = useTransactions(userId, 10);
 
+    // summary data
+    const totalSpending = transactions?.reduce((sum: number, t: { amount: number }) => sum + t.amount, 0) ?? 0;
+    const subscriptionCount = subscriptions?.length ?? 0;
+    if (subsLoading || txLoading) return <div>Loading...</div>;
     return (
         <div className="flex min-h-screen bg-[#f0f2f0]">
             {/* Sidebar on the left */}
@@ -39,7 +50,7 @@ export const Dashboard = () => {
                         `}>
                             <InfoCard
                                 title="Total Balance"
-                                value="$12,450.00"
+                                value="$20000"
                                 trend="+12.5%"
                                 trendUp={true}
                                 accentColor="#063b1e"
@@ -47,14 +58,14 @@ export const Dashboard = () => {
                             />
                             <InfoCard
                                 title="Monthly Spending"
-                                value="$2,140.50"
+                                value={`${totalSpending.toFixed(2)}`}
                                 trend="-2.4%"
                                 trendUp={false}
                                 className="min-w-[280px] sm:min-w-[300px] flex-shrink-0"
                             />
                             <InfoCard
                                 title="Active Subscriptions"
-                                value="18"
+                                value={String(subscriptionCount)}
                                 trend="+1 this month"
                                 trendUp={true}
                                 className="min-w-[280px] sm:min-w-[300px] flex-shrink-0"
@@ -89,7 +100,7 @@ export const Dashboard = () => {
                             <Budget />
                         </div>
                         <div className="lg:col-span-2">
-                            <Subscriptions />
+                            <Subscriptions subs={subscriptions}/>
                         </div>
                     </div>
                 </div>
