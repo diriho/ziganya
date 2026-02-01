@@ -1,4 +1,4 @@
-import supabase from "../supabase/supabaseConfig";
+import supabase from "../../supabase/supabaseConfig";
 
 const googleSignIn_Logic = async () => {
     try {
@@ -9,10 +9,11 @@ const googleSignIn_Logic = async () => {
         return { error: null };
     } catch (err) {
         return {
-            error: err,
-            message: "Google sign-in failed",
-            timestamp: new Date().toISOString()
-
+            error: {    
+                error: err,
+                message: "Google sign-in failed",
+                timestamp: new Date().toISOString()
+            }
         };
     }
 };

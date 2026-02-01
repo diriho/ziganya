@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Button from '../Button/Button';
+import Button from '../Button';
 import { Apple, LogOut } from 'lucide-react';
 import Login from '../../pages/Login';
 import supabase from '../../supabase/supabaseConfig';

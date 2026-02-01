@@ -1,4 +1,4 @@
-import supabase from "../supabase/supabaseConfig";
+import supabase from "../../supabase/supabaseConfig";
 import type { User } from "@supabase/supabase-js";
 
 async function createOrUpdateUserDoc(u: User) {
@@ -35,9 +35,10 @@ const emailPassword_Logic = {
         } catch (err) {
             return { 
                 user: null, 
-                error: err?? "Email sign-in failed",
-                timestamp: new Date().toISOString() 
-            
+                error: {
+                    error: err,
+                    message: "Email sign-in failed",
+                    timestamp: new Date().toISOString() }
             };
         }
     },
@@ -52,8 +53,13 @@ const emailPassword_Logic = {
         } catch (err) {
             return { 
                 user: null,
-                 error: err?? "Registration failed",
-                 timestamp: new Date().toISOString()    };
+                 error: {
+                    error: err,
+                    message: "Registration failed! Make sure you add a valid email",
+                    timestamp: new Date().toISOString() 
+                }
+        }
+        
         }
     }
 };

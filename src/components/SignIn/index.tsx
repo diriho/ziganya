@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
-import googleSignIn_Logic from "../utils/googleAuth";
-import emailPassword_Logic from "../utils/EmailPassword";
+import googleSignIn_Logic from "../../utils/googleAuthHandler";
+import emailPassword_Logic from "../../utils/emailPasswordHandler";
 import { Chrome } from "lucide-react";
 
 interface SignInProps {
@@ -19,7 +19,7 @@ const SignIn = ({ onSuccess }: SignInProps) => {
     setLoading(true);
     const { error } = await googleSignIn_Logic();
     if (error) {
-       setError(error);
+       setError(error.message);
     }
     // Note: This will trigger a redirect, so subsequent code might not execute in this session context.
     setLoading(false);
@@ -33,7 +33,7 @@ const SignIn = ({ onSuccess }: SignInProps) => {
     const { user, error } = await emailPassword_Logic.signIn(email, password);
     
     if (error) {
-        setError(error);
+        setError(error.message);
     } else if (user && onSuccess) {
         onSuccess();
     }
@@ -48,7 +48,7 @@ const SignIn = ({ onSuccess }: SignInProps) => {
     const { user, error } = await emailPassword_Logic.register(email, password);
     
     if (error) {
-        setError(error);
+        setError(error.message);
     } else if (user && onSuccess) {
         onSuccess();
     }

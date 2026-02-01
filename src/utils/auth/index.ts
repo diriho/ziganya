@@ -1,4 +1,4 @@
-import supabase from "../supabase/supabaseConfig";
+import supabase from "../../supabase/supabaseConfig";
 
 export async function signInWithGoogle() {
   try {

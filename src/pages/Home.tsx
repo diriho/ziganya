@@ -1,12 +1,12 @@
 
 
-import Header from "../components/Header/Header";
-import Button from "../components/Button/Button";
+import Header from "../components/Header";
+import Button from "../components/Button";
 import { motion } from "framer-motion";
 import { ArrowRight, CreditCard, Receipt, Smartphone } from "lucide-react";
-import Feature from "../components/Feature/feature";
-import UIMock from "../components/UIMockup/uimock";
-import Footer from "../components/Footer/Footer";
+import Feature from "../components/Feature";
+import UIMock from "../components/UIMockup";
+import Footer from "../components/Footer";
 
 export default function Home() {
   return (
