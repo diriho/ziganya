@@ -1,8 +1,11 @@
+import { Link } from "react-router"
+
 interface iconOptions {
     icon: React.ReactNode,
     text: string,
     active: boolean,
     hasActiveState: boolean,
+    location?:string,
     onClick: () => void
 }
 export const SidebarItem = ({
@@ -10,6 +13,7 @@ export const SidebarItem = ({
     text,
     active,
     hasActiveState,
+    location,
     onClick
 }: iconOptions) => {
     return (
@@ -29,9 +33,12 @@ export const SidebarItem = ({
                 <button 
                 className="w-full flex flex-row items-center gap-3"
                 onClick={onClick}
-                >
+                >   
                     <span className="flex items-center">{icon}</span>
-                    <span className="text-sm font-medium">{text}</span>
+                    <Link to={location ?? "/"}>
+                        <span className="text-sm font-medium">{text}</span>
+                    </Link>
+                    
                 </button>
             </div>
         </nav>

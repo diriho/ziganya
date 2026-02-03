@@ -12,6 +12,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      '@components': '/src/components',
       '@sdk/db': path.resolve(__dirname, './sdk/db'),
       "@sdk/requests": path.resolve(__dirname, "./sdk/requests/"),
       module: path.resolve(__dirname, "vite-module-stub.js"),

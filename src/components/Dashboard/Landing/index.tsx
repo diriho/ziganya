@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { useSubscriptions, useTransactions } from "@sdk/requests";
-import { Sidebar } from "../Sidebar";
-import { Header } from "./Header";
-import { InfoCard } from "./InfoCard";
-import { SpendingAnalytics } from "./SpendingAnalytics";
-import { RecentActivities } from "./RecentActivities";
-import {Budget} from "./Budget";
-import { Subscriptions } from "./Subscriptions";
+import { Sidebar } from "@components/Sidebar";
+import {
+    Header,
+    InfoCard,
+    SpendingAnalytics,
+    RecentActivities,
+    Budget,
+    Subscriptions
+}
+    from "@components/Dashboard";
+
 
 
 export const Dashboard = () => {
@@ -27,9 +31,8 @@ export const Dashboard = () => {
 
             {/* Main content area - full width to scroll under sidebar */}
             <main className="flex-1 w-full">
-                <div className={`p-3 sm:p-4 md:p-6 transition-all duration-300 ease-in-out ${
-                    isSidebarOpen ? 'md:ml-64 lg:ml-72' : 'ml-0'
-                }`}>
+                <div className={`p-3 sm:p-4 md:p-6 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'md:ml-64 lg:ml-72' : 'ml-0'
+                    }`}>
                     <Header isSidebarOpen={isSidebarOpen} />
                 </div>
 
@@ -81,15 +84,14 @@ export const Dashboard = () => {
                         </div>
                     </div>
                 </div>
-                <div className={`p-3 sm:p-4 md:p-6 transition-all duration-300 ease-in-out ${
-                    isSidebarOpen ? 'md:ml-64 lg:ml-72' : 'ml-0'
-                }`}>
+                <div className={`p-3 sm:p-4 md:p-6 transition-all duration-300 ease-in-out ${isSidebarOpen ? 'md:ml-64 lg:ml-72' : 'ml-0'
+                    }`}>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
                         {/* Left panel - takes 2 columns on large screens */}
                         <div className="lg:col-span-2">
                             <SpendingAnalytics />
                         </div>
-                        
+
                         {/* Right panel - takes 1 column on large screens */}
                         <div className="lg:col-span-1">
                             <RecentActivities />
@@ -100,7 +102,7 @@ export const Dashboard = () => {
                             <Budget />
                         </div>
                         <div className="lg:col-span-2">
-                            <Subscriptions subs={subscriptions}/>
+                            <Subscriptions subs={subscriptions} />
                         </div>
                     </div>
                 </div>
@@ -110,3 +112,4 @@ export const Dashboard = () => {
         </div>
     )
 }
+

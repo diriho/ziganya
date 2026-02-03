@@ -1,4 +1,5 @@
-import { SubscriptionItem } from "./SubscriptionItem"
+import { Link } from "react-router";
+import { SubscriptionItem } from "@components/Dashboard"
 import type { Subscription } from "@sdk/db";
 interface SubscriptionOptions{
   subs?:Subscription[]
@@ -10,12 +11,12 @@ export const Subscriptions = ({subs = []}:SubscriptionOptions )=> {
         {/* header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 mb-4 sm:mb-6">
             <h1 className="text-brand-green text-lg sm:text-xl font-bold">Upcoming Subscriptions</h1>
-            <a 
-              href="/subscriptions" 
+            <Link
+              to="/subscriptions" 
               className="text-sm text-brand-green hover:text-brand-green/80 transition-colors font-medium"
             >
               View All
-            </a>
+            </Link>
         </div>
         {/* List of subscriptions - responsive grid (shifting from flex)*/}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">

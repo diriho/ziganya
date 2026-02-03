@@ -33,18 +33,18 @@ export const Sidebar = (props: SidebarProps = {}) => {
       {
           title: 'Menu',
           items: [
-              { icon: <LayoutDashboard size={20} />, text: 'Dashboard', active: activeItem.section === 'Menu' && activeItem.item === 'Dashboard' },
-              { icon: <Receipt size={20} />, text: "Transactions", active: activeItem.section === 'Menu' && activeItem.item === 'Transactions' },
-              { icon: <Calendar size={20} />, text: 'Calendar', active: activeItem.section === 'Menu' && activeItem.item === 'Calendar' },
-              { icon: <CreditCard size={20} />, text: 'Subscriptions', active: activeItem.section === 'Menu' && activeItem.item === 'Subscriptions' }
+              { icon: <LayoutDashboard size={20} />, text: 'Dashboard', active: activeItem.section === 'Menu' && activeItem.item === 'Dashboard',location:"/" },
+              { icon: <Receipt size={20} />, text: "Transactions", active: activeItem.section === 'Menu' && activeItem.item === 'Transactions',location: "/transactions" },
+              { icon: <Calendar size={20} />, text: 'Calendar', active: activeItem.section === 'Menu' && activeItem.item === 'Calendar',location:"/calendar" },
+              { icon: <CreditCard size={20} />, text: 'Subscriptions', active: activeItem.section === 'Menu' && activeItem.item === 'Subscriptions',location:"/subscriptions" }
           ],
           hasActiveState: true
       },
       {
           title: 'General',
           items: [
-              { icon: <Settings size={20} />, text: 'Settings', active: activeItem.section === 'General' && activeItem.item === 'Settings' },
-              { icon: <LogOut size={20} />, text: 'Logout', active: activeItem.section === 'General' && activeItem.item === 'Logout' }
+              { icon: <Settings size={20} />, text: 'Settings', active: activeItem.section === 'General' && activeItem.item === 'Settings',location:"/settings" },
+              { icon: <LogOut size={20} />, text: 'Logout', active: activeItem.section === 'General' && activeItem.item === 'Logout',location:"/logout" }
           ],
           hasActiveState: false
       }
