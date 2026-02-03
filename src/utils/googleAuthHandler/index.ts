@@ -1,8 +1,8 @@
-import supabase from "../../supabase/supabaseConfig";
+import {dbClient} from "@sdk/db";
 
 const googleSignIn_Logic = async () => {
     try {
-        const { error } = await supabase.auth.signInWithOAuth({
+        const { error } = await dbClient.auth.signInWithOAuth({
             provider: 'google',
         });
         if (error) throw error;

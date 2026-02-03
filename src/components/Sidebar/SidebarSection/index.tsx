@@ -1,8 +1,8 @@
-import { SidebarItem } from "../SidebarItem";
+import { SidebarItem } from "../SidebarItem"; //TODO: fix it to use @components/Sidebar
 
 interface sideBarOptions {
     title: string,
-    items: Array<{ icon: React.ReactNode; text: string; active: boolean }>,
+    items: Array<{ icon: React.ReactNode; text: string; active: boolean; location?: string }>,
     hasActiveState: boolean,
     onItemClick: (title: string, text: string) => void
 }
@@ -17,6 +17,7 @@ export const SidebarSection = ({ title, items, hasActiveState, onItemClick }: si
                     icon={item.icon}
                     text={item.text}
                     active={item.active}
+                    location={item.location}
                     hasActiveState={hasActiveState}
                     onClick={() => onItemClick(title,item.text)}
                 />

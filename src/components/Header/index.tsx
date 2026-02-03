@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import Button from '../Button';
 import { Apple, LogOut } from 'lucide-react';
 import Login from '../../pages/Login';
-import supabase from '../../supabase/supabaseConfig';
-import type { User } from '@supabase/supabase-js';
+import {dbClient,type User} from '@sdk/db';
 import { signOutUser } from '../../utils/auth';
 
 const Header = () => {
@@ -11,11 +10,11 @@ const Header = () => {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    dbClient.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = dbClient.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         setIsLoginOpen(false);

@@ -1,4 +1,3 @@
-import React from 'react'
 import SettingsSection from '../settinSection'
 import { Shield } from "lucide-react";  
 

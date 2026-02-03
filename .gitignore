@@ -6,7 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
+.conda
 node_modules
 dist
 dist-ssr
@@ -22,9 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+*.cursorignore
+*.netlify
+dev-docs/
 
-# Local Netlify folder
-.netlify
 
-# Environment variables
-.env

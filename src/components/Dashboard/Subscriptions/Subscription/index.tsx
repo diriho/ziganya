@@ -1,49 +1,31 @@
-import { SubscriptionItem } from "./SubscriptionItem"
+import { Link } from "react-router";
+import { SubscriptionItem } from "@components/Dashboard"
+import type { Subscription } from "@sdk/db";
+interface SubscriptionOptions{
+  subs?:Subscription[]
+}
+export const Subscriptions = ({subs = []}:SubscriptionOptions )=> {
 
-export const Subscriptions = () => {
-  const upcomingsubs = [
-    {
-      name: 'Adobe Creative Cloud',
-      date: 'Jan 24',
-      amount: '$52.99',
-    },
-    {
-      name: 'ChatGPT Plus',
-      date: 'Jan 25',
-      amount: '$20.00',
-    },
-    {
-      name: 'Notion AI',
-      date: 'Jan 28',
-      amount: '$10.00',
-    },
-    {
-      name: 'YouTube Premium',
-      date: 'Feb 01',
-      amount: '$13.99',
-    },
-  ]
-  
   return (
     <div className="w-full h-full p-4 sm:p-6 md:p-8 bg-white rounded-[2rem] border border-zinc-200 shadow-sm">
         {/* header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 mb-4 sm:mb-6">
             <h1 className="text-brand-green text-lg sm:text-xl font-bold">Upcoming Subscriptions</h1>
-            <a 
-              href="/subscriptions" 
+            <Link
+              to="/subscriptions" 
               className="text-sm text-brand-green hover:text-brand-green/80 transition-colors font-medium"
             >
               View All
-            </a>
+            </Link>
         </div>
         {/* List of subscriptions - responsive grid (shifting from flex)*/}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-            {upcomingsubs.map((item, index) => (
+            {subs.map((item) => (
                 <SubscriptionItem 
-                  key={index} 
+                  key={item.id} 
                   name={item.name} 
-                  amount={item.amount} 
-                  date={item.date}  
+                  amount={item.currency === "USD" ? `${(item.amount ?? 0).toFixed(2)}` : `${(item.amount ?? 0).toFixed(2)} ${item.currency}` }
+                  date={item.next_billing_date ? new Date(item.next_billing_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"} 
                 />
             ))}
         </div>

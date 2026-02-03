@@ -1,4 +1,3 @@
-import React from 'react';
 import ThemeMode from './children/themeMode';
 import Profile from './children/profile';
 import Security from './children/security';

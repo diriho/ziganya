@@ -466,3 +466,4 @@ export type BudgetInsert = Database['public']['Tables']['budgets']['Insert']
 
 export type Upload = Database['public']['Tables']['uploads']['Row']
 export type UploadInsert = Database['public']['Tables']['uploads']['Insert']
+export type { User } from '@supabase/supabase-js';

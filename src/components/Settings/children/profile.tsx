@@ -1,4 +1,3 @@
-import React from 'react'
 import SettingsSection from '../settinSection/index'
 import { User } from 'lucide-react';
 

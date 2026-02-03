@@ -1,15 +1,16 @@
-import supabase from "../../supabase/supabaseConfig";
-import type { User } from "@supabase/supabase-js";
+import { dbClient,type User } from "@sdk/db";
 
 async function createOrUpdateUserDoc(u: User) {
+    //TODO: Subject to change based on the db we defined
     try {
-        const { error } = await supabase
+        const { error } = await dbClient
             .from('users')
             .upsert({
+                username: u.user_metadata?.full_name ?? " ",
+                email: u.email,
                 uid: u.id,
-                email: u.email ?? null,
-                displayName: u.user_metadata?.full_name ?? u.user_metadata?.name ?? null,
-                lastSeen: new Date().toISOString()
+                created_at: u.created_at,
+                updated_at: new Date().toISOString(),
             }, { onConflict: 'uid' });
 
         if (error) console.error("Failed to write user doc", error);
@@ -26,7 +27,7 @@ async function createOrUpdateUserDoc(u: User) {
 const emailPassword_Logic = {
     signIn: async (email: string, password: string) => {
         try {
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            const { data, error } = await dbClient.auth.signInWithPassword({ email, password });
             if (error) throw error;
             if (data.user) {
                 await createOrUpdateUserDoc(data.user);
@@ -44,7 +45,7 @@ const emailPassword_Logic = {
     },
     register: async (email: string, password: string) => {
         try {
-            const { data, error } = await supabase.auth.signUp({ email, password });
+            const { data, error } = await dbClient.auth.signUp({ email, password });
             if (error) throw error;
             if (data.user) {
                 await createOrUpdateUserDoc(data.user);

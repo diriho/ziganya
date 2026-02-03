@@ -10,7 +10,8 @@ import {
   Menu,
 } from "lucide-react";
 import { useState, useMemo } from "react";
-import {SidebarSection} from './SidebarSection'
+import { Link, useLocation } from "react-router";
+import { SidebarSection } from './SidebarSection'
 import { UpgradeCard } from "./UpgradeCard";
 
 
@@ -21,6 +22,32 @@ interface SidebarProps {
   onItemSelect?: (item: string) => void;
 }
 
+const defaultPath = "Dashboard";
+
+const paths: Record<string, string> = {
+  "/dashboard": "Dashboard",
+  "/dashboard/transactions": "Transactions",
+  "/dashboard/calendar": "Calendar",
+  "/dashboard/subscriptions": "Subscriptions",
+  "/dashboard/settings": "Settings",
+  "/logout": "Logout",
+};
+
+const deriveActiveItem = (pathname: string) => {
+  if (paths[pathname]) {
+    return paths[pathname];
+  }
+
+  const match = Object.entries(paths).find(([path]) => {
+    if (path === "/") {
+      return pathname === "/";
+    }
+    return pathname === path || pathname.startsWith(`${path}/`);
+  });
+
+  return match?.[1] ?? defaultPath;
+};
+
 export const Sidebar = (props: SidebarProps = {}) => {
   const { 
       isOpen: externalIsOpen, 
@@ -28,20 +55,18 @@ export const Sidebar = (props: SidebarProps = {}) => {
       activeItem: externalActiveItem,
       onItemSelect
   } = props;
+  const location = useLocation();
   
   const [internalIsOpen, setInternalIsOpen] = useState(true);
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
   const setIsOpen = externalSetIsOpen ? (value: boolean) => externalSetIsOpen(value) : setInternalIsOpen;
   
-  // Use internal state if no external state provided, otherwise use external
-  const [internalActiveItem, setInternalActiveItem] = useState('Dashboard');
-  const activeItem = externalActiveItem !== undefined ? externalActiveItem : internalActiveItem;
+  const derivedActiveItem = useMemo(() => deriveActiveItem(location.pathname), [location.pathname]);
+  const activeItem = externalActiveItem !== undefined ? externalActiveItem : derivedActiveItem;
 
-  const handleItemClick = (sectionTitle: string, itemText: string) => {
+  const handleItemClick = (_sectionTitle: string, itemText: string) => {
     if (onItemSelect) {
         onItemSelect(itemText);
-    } else {
-        setInternalActiveItem(itemText);
     }
   };
 
@@ -49,18 +74,18 @@ export const Sidebar = (props: SidebarProps = {}) => {
       {
           title: 'Menu',
           items: [
-              { icon: <LayoutDashboard size={20} />, text: 'Dashboard', active: activeItem === 'Dashboard' },
-              { icon: <Receipt size={20} />, text: "Transactions", active: activeItem === 'Transactions' },
-              { icon: <Calendar size={20} />, text: 'Calendar', active: activeItem === 'Calendar' },
-              { icon: <CreditCard size={20} />, text: 'Subscriptions', active: activeItem === 'Subscriptions' }
+              { icon: <LayoutDashboard size={20} />, text: 'Dashboard', active: activeItem === 'Dashboard',location:"/dashboard" },
+              { icon: <Receipt size={20} />, text: "Transactions", active: activeItem === 'Transactions',location: "/dashboard/transactions" },
+              { icon: <Calendar size={20} />, text: 'Calendar', active: activeItem === 'Calendar',location:"/dashboard/calendar" },
+              { icon: <CreditCard size={20} />, text: 'Subscriptions', active: activeItem === 'Subscriptions',location:"/dashboard/subscriptions" }
           ],
           hasActiveState: true
       },
       {
           title: 'General',
           items: [
-              { icon: <Settings size={20} />, text: 'Settings', active: activeItem === 'Settings' },
-              { icon: <LogOut size={20} />, text: 'Logout', active: activeItem === 'Logout' }
+              { icon: <Settings size={20} />, text: 'Settings', active: activeItem === 'Settings',location:"/dashboard/settings" },
+              { icon: <LogOut size={20} />, text: 'Logout', active: activeItem === 'Logout',location:"/logout" }
           ],
           hasActiveState: false
       }
@@ -91,7 +116,7 @@ export const Sidebar = (props: SidebarProps = {}) => {
                 <div className="flex flex-row items-center gap-2">
                     <Sparkles size={20} />
                     <p className="text-[20px] font-bold text-[#063b1e] tracking-widest px-2 mb-2">
-                        Ziganya
+                        <Link to="/">Ziganya</Link>
                     </p>
                 </div>
                 <button

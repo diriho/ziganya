@@ -1,8 +1,8 @@
-import supabase from "../../supabase/supabaseConfig";
+import {dbClient} from "@sdk/db";
 
 export async function signInWithGoogle() {
   try {
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { error } = await dbClient.auth.signInWithOAuth({
       provider: 'google',
     });
     if (error) throw error;
@@ -19,7 +19,7 @@ export async function signInWithGoogle() {
 
 export async function signOutUser() {
   try {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await dbClient.auth.signOut();
     if (error) throw error;
   } catch (err) {
     return {
