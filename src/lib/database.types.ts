@@ -453,21 +453,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-
-// Convenient type aliases (add after the generated content)
-export type Transaction = Database['public']['Tables']['transactions']['Row']
-export type TransactionInsert = Database['public']['Tables']['transactions']['Insert']
-export type TransactionUpdate = Database['public']['Tables']['transactions']['Update']
-export type Category = Database['public']['Tables']['categories']['Row']
-export type CategoryInsert = Database['public']['Tables']['categories']['Insert']
-export type Merchant = Database['public']['Tables']['merchants']['Row']
-export type MerchantInsert = Database['public']['Tables']['merchants']['Insert']
-export type Subscription = Database['public']['Tables']['subscriptions']['Row']
-export type SubscriptionInsert = Database['public']['Tables']['subscriptions']['Insert']
-export type Budget = Database['public']['Tables']['budgets']['Row']
-export type BudgetInsert = Database['public']['Tables']['budgets']['Insert']
-export type Upload = Database['public']['Tables']['uploads']['Row']
-export type UploadInsert = Database['public']['Tables']['uploads']['Insert']
-export type UserRow = Database['public']['Tables']['users']['Row']
-export type UserUpdate = Database['public']['Tables']['users']['Update']
-export type { User } from '@supabase/supabase-js'

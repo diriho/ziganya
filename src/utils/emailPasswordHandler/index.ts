@@ -8,7 +8,7 @@ async function createOrUpdateUserDoc(u: User) {
             .upsert({
                 username: u.user_metadata?.full_name ?? " ",
                 email: u.email,
-                uid: u.id,
+                user_id: u.id,
                 created_at: u.created_at,
                 updated_at: new Date().toISOString(),
             }, { onConflict: 'uid' });

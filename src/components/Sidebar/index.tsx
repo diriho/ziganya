@@ -6,9 +6,8 @@ import {
   Sparkles,
   Settings,
   LogOut,
-  X,
-  Menu,
 } from "lucide-react";
+import { AnimatedMenuIcon } from "./AnimatedMenuIcon";
 import { useState, useMemo } from "react";
 import { Link, useLocation } from "react-router";
 import { SidebarSection } from './SidebarSection'
@@ -121,13 +120,10 @@ export const Sidebar = (props: SidebarProps = {}) => {
                 </div>
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="
-                        p-1.5 rounded-lg
-                        hover:bg-zinc-100
-                        transition-colors duration-200
-                    "
+                    className="p-2 rounded-xl hover:bg-zinc-100 active:scale-95 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-green/30 focus:ring-offset-1"
+                    aria-label="Close menu"
                 >
-                    <X size={18} className="text-zinc-600" />
+                    <AnimatedMenuIcon isOpen size={20} className="text-zinc-600" />
                 </button>
             </div>
 
@@ -155,17 +151,10 @@ export const Sidebar = (props: SidebarProps = {}) => {
         {!isOpen && (
             <button
                 onClick={() => setIsOpen(true)}
-                className="
-                    fixed top-3.5 sm:top-4 left-3 sm:left-4 z-50
-                    bg-white border border-zinc-200 rounded-xl p-2.5
-                    shadow-md hover:shadow-lg
-                    hover:bg-zinc-50 hover:border-zinc-300
-                    transition-all duration-200
-                    text-brand-green
-                "
+                className="fixed top-3.5 sm:top-4 left-3 sm:left-4 z-50 flex items-center justify-center bg-white border border-zinc-200 rounded-xl p-2.5 shadow-md hover:shadow-lg hover:bg-zinc-50 hover:border-zinc-300 active:scale-95 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-brand-green/30 focus:ring-offset-1 text-brand-green w-10 h-10"
                 aria-label="Open menu"
             >
-                <Menu size={20} />
+                <AnimatedMenuIcon isOpen={false} size={20} className="text-brand-green" />
             </button>
         )}
     </>

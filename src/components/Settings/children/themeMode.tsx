@@ -1,59 +1,66 @@
-import React from 'react'
-import SettingsSection from '../settinSection'
-import { Moon, Sun} from "lucide-react";
+import { useState, useEffect } from "react";
+import SettingsSection from "../settinSection/index";
+import { Moon, Sun } from "lucide-react";
 
-const ThemeMode = () => {
-    const [theme, setTheme] = React.useState<'light' | 'dark'>(() => {
-        if (typeof window !== 'undefined') {
-            const savedTheme = localStorage.getItem('theme') as 'light' | 'dark';
-            if (savedTheme) return savedTheme;
-            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        }
-        return 'light';
-    });
+export default function ThemeMode() {
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("theme") as "light" | "dark" | null;
+      if (saved) return saved;
+      return window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+    }
+    return "light";
+  });
 
-    React.useEffect(() => {
-        const root = window.document.documentElement;
-        if (theme === 'dark') {
-            root.classList.add('dark');
-        } else {
-            root.classList.remove('dark');
-        }
-        localStorage.setItem('theme', theme);
-    }, [theme]);
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
-    const toggleTheme = () => {
-        setTheme(prev => prev === 'light' ? 'dark' : 'light');
-    };
-                   
-    return (
-        <SettingsSection title="Appearance" description="Customize the appearance of the application.">
-            <div className="flex items-center justify-between p-4 bg-white border border-zinc-200 rounded-2xl">
-                <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-[#6eff8a]/20 rounded-xl flex items-center justify-center text-[#063b1e]">
-                        {theme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
-                    </div>
-                    <div>
-                        <p className="font-bold text-[#063b1e]">Dark Mode</p>
-                        <p className="text-xs text-zinc-500">Switch between light and dark themes while keeping the green accents.</p>
-                    </div>
-                </div>
-                
-                <button
-                    onClick={toggleTheme}
-                    className={`relative w-12 h-6 rounded-full transition-colors duration-200 ease-in-out ${
-                        theme === 'dark' ? 'bg-[#6eff8a]' : 'bg-gray-200'
-                    }`}
-                >
-                    <span
-                        className={`block w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform duration-200 ease-in-out ${
-                            theme === 'dark' ? 'translate-x-7 bg-[#063b1e]' : 'translate-x-1'
-                        }`}
-                    />
-                </button>
-            </div>
-        </SettingsSection>
-    )
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  };
+
+  return (
+    <SettingsSection
+      title="Appearance"
+      description="Customize the look of the application."
+    >
+      <div className="flex flex-col gap-4 rounded-2xl border border-zinc-100 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-green-light/20 text-brand-green">
+            {theme === "dark" ? <Moon size={20} /> : <Sun size={20} />}
+          </div>
+          <div>
+            <p className="font-medium text-zinc-900">Theme</p>
+            <p className="text-sm text-zinc-500">
+              Switch between light and dark mode.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={toggleTheme}
+          role="switch"
+          aria-checked={theme === "dark"}
+          className={`relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 ${
+            theme === "dark" ? "bg-brand-green" : "bg-zinc-200"
+          }`}
+        >
+          <span
+            className={`absolute top-1 left-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+              theme === "dark" ? "translate-x-6" : "translate-x-0"
+            }`}
+          />
+        </button>
+      </div>
+    </SettingsSection>
+  );
 }
-
-export default ThemeMode;

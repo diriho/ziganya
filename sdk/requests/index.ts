@@ -5,3 +5,4 @@ export * from "./useCategories";
 export * from "./useUploads";
 export * from "./useMerchants";
 export * from "./queryClient";
+export * from "./useUsers";
