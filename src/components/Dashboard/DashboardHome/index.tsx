@@ -13,6 +13,7 @@ export const DashboardHome = () => {
   const userId = import.meta.env.VITE_TEST_USER;
   const { data: subscriptions, isLoading: subsLoading } = useSubscriptions(userId);
   const { data: transactions, isLoading: txLoading } = useTransactions(userId, 10);
+  const summarySubscriptions = subscriptions?.slice(0, 5) ?? [];
 
   const totalSpending =
     transactions?.reduce((sum: number, t: { amount: number }) => sum + t.amount, 0) ?? 0;
@@ -70,10 +71,9 @@ export const DashboardHome = () => {
           <Budget />
         </div>
         <div className="lg:col-span-2">
-          <Subscriptions subs={subscriptions} />
+          <Subscriptions subs={summarySubscriptions} />
         </div>
       </div>
     </>
   );
 };
-
