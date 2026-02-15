@@ -28,7 +28,6 @@ dist-ssr
 *.sln
 *.sw?
 *.cursorignore
-*.netlify
 dev-docs/
 
 
