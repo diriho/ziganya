@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "db:types": "npx supabase gen types typescript --project-id <project id> > src/lib/database.types.ts",
+    "db:types": "npx supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/lib/database.types.ts",
     "lint": "eslint .",
     "preview": "vite preview"
   },

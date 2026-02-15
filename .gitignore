@@ -32,3 +32,6 @@ dist-ssr
 dev-docs/
 
 
+
+# Local Netlify folder
+.netlify
