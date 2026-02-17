@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.94.0",
-    "@tanstack/react-query": "^5.90.20",
+    "@tanstack/react-query": "^5.90.21",
     "fast-xml-parser": "^5.3.4",
     "framer-motion": "^12.31.0",
     "lucide-react": "^0.563.0",
