@@ -1,41 +1,109 @@
-import SettingsSection from '../settinSection/index'
-import { User } from 'lucide-react';
+import React from "react";
+import SettingsSection from "../settinSection/index";
+import { USERID } from "@/lib/constants";
+import { formatDate } from "@/lib/format";
+import { useUser,useUserUpdate } from "@sdk/requests";
+import { useState } from "react";
+
+export default function Profile() {
+  const { data: userList, isLoading, error } = useUser(USERID);
+  const user = userList?.[0];
+
+  const [username, setUsername] = useState(user?.username ?? "");
+  const [email, setEmail] = useState(user?.email ?? "");
+
+  const updateUserMutation = useUserUpdate(USERID);
+ 
+
+  const handleSave = (e:React.MouseEvent<HTMLButtonElement>) =>{
+    e.preventDefault();
+    updateUserMutation.mutate({
+      username:username.trim() || null,
+      email: email.trim() || null
+    });
+  };
 
 
-const Profile = () => {
+  if (error) return <div className="text-red-900">Error loading profile: {error.message}</div>;
+  if (isLoading) return <div>Loading user info…</div>;
+  if (!USERID) {
+    return (
+      <SettingsSection title="Profile" description="Update your personal details and how others see you.">
+        <div className="rounded-2xl border border-zinc-100 bg-white p-6 shadow-sm text-center text-zinc-500">
+          Sign in to view and edit your profile.
+        </div>
+      </SettingsSection>
+    );
+  }
+  if (!user) {
+    return (
+      <SettingsSection title="Profile" description="Update your personal details and how others see you.">
+        <div className="rounded-2xl border border-zinc-100 bg-white p-6 shadow-sm text-center text-zinc-500">
+          No profile found. Create your profile to get started.
+        </div>
+      </SettingsSection>
+    );
+  }
+
   return (
-    <SettingsSection title="Profile Information" description="Update your personal details and how others see you.">
-      <div className="p-6 bg-white border border-zinc-200 rounded-2xl space-y-4">
-                <div className="flex items-center gap-6 mb-4">
-                  <div className="relative">
-                    <div className="w-20 h-20 bg-[#6eff8a] rounded-2xl border-4 border-white">
-                      {/* <Image src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" alt="Avatar" width={80} height={80} /> */}
-                    </div>
-                    <button className="absolute -bottom-2 -right-2 p-2 bg-[#063b1e] text-[#6eff8a] rounded-lg shadow-lg hover:scale-110 transition-transform">
-                      <User size={14} />
-                    </button>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-[#063b1e]">Tharcisse</h4>
-                    <p className="text-sm text-zinc-500">Member since January 2024</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-zinc-900 uppercase tracking-widest">Full Name</label>
-                    <input type="text" defaultValue="Tharcisse" className="w-full px-4 py-2 bg-zinc-60 border border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#6eff8a]/20" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-zinc-900 uppercase tracking-widest">Email Address</label>
-                    <input type="email" defaultValue="tharcisse@gmail.com" className="w-full px-4 py-2 bg-zinc-60 border border-zinc-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#6eff8a]/20" />
-                  </div>
-                </div>
-                <button className="mt-2 px-6 py-2 bg-[#063b1e] text-[#6eff8a] rounded-xl font-bold text-sm hover:opacity-90 transition-opacity">
-                  Save Changes
-                </button>
-              </div>
-    </SettingsSection>
-  )
-}
+    <SettingsSection
+      title="Profile"
+      description="Update your personal details and how others see you."
+    >
+      <div className="rounded-2xl border border-zinc-100 bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
+          <div className="flex items-center gap-4">
+            <div>
+              <p className="font-semibold text-zinc-900 uppercase">{user?.username ?? "—"}</p>
+              <p className="text-sm text-zinc-500">Member since {formatDate(user?.created_at)}</p>
+            </div>
+          </div>
+        </div>
 
-export default Profile;
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <label
+              htmlFor="profile-name"
+              className="block text-xs font-medium uppercase tracking-wider text-zinc-500"
+            >
+              Full name
+            </label>
+            <input
+              id="profile-name"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/20"
+            />
+          </div>
+          <div className="space-y-2">
+            <label
+              htmlFor="profile-email"
+              className="block text-xs font-medium uppercase tracking-wider text-zinc-500"
+            >
+              Email address
+            </label>
+            <input
+              id="profile-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/20"
+            />
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <button
+            type="button"
+            className="rounded-xl bg-brand-green px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-opacity hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2"
+            onClick={handleSave}
+            disabled={updateUserMutation.isPending}
+          >
+            {updateUserMutation.isPending ? "Saving..." : "Save changes"}
+          </button>
+        </div>
+      </div>
+    </SettingsSection>
+  );
+}

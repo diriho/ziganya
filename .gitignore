@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Env (never commit secrets; set in Netlify UI)
+.env
+.env.*
+!.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -23,7 +28,9 @@ dist-ssr
 *.sln
 *.sw?
 *.cursorignore
-*.netlify
 dev-docs/
 
 
+
+# Local Netlify folder
+.netlify

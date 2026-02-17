@@ -9,31 +9,34 @@ const cards = [
   {
     label: "Income",
     value: (income: number) => formatCurrency(income, "USD"),
-    accent: "from-emerald-50 via-white to-white text-emerald-600 ring-emerald-100",
+    text: "text-emerald-700",
+    bg: "bg-emerald-50/80",
   },
   {
     label: "Expenses",
     value: (_income: number, expenses: number) => formatCurrency(expenses, "USD"),
-    accent: "from-rose-50 via-white to-white text-rose-600 ring-rose-100",
+    text: "text-amber-700",
+    bg: "bg-amber-50/80",
   },
   {
     label: "Net",
     value: (income: number, expenses: number) => formatCurrency(income - expenses, "USD"),
-    accent: "from-zinc-50 via-white to-white text-zinc-900 ring-zinc-100",
+    text: "text-zinc-800",
+    bg: "bg-zinc-50/80",
   },
 ];
 
 export const TransactionSummaryCards = ({ income, expenses }: TransactionSummaryCardsProps) => (
   <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-    {cards.map(({ label, value, accent }) => (
+    {cards.map(({ label, value, text, bg }) => (
       <div
         key={label}
-        className={`rounded-3xl bg-gradient-to-br ${accent} p-5 ring-1 ring-inset`}
+        className={`rounded-2xl border border-zinc-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-md ${bg}`}
       >
-        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+        <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
           {label}
         </p>
-        <p className="mt-2 text-2xl font-semibold">
+        <p className={`mt-2 text-xl font-semibold tabular-nums ${text}`}>
           {value(income, expenses)}
         </p>
       </div>

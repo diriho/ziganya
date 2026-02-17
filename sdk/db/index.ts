@@ -16,4 +16,6 @@ export type {
   Upload,
   UploadInsert,
   User,
+  UserRow,
+  UserUpdate,
 } from "./database.types";

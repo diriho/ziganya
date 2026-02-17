@@ -12,7 +12,7 @@ export const Subscriptions = ({subs = []}:SubscriptionOptions )=> {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 mb-4 sm:mb-6">
             <h1 className="text-brand-green text-lg sm:text-xl font-bold">Upcoming Subscriptions</h1>
             <Link
-              to="/subscriptions" 
+              to="/dashboard/subscriptions"
               className="text-sm text-brand-green hover:text-brand-green/80 transition-colors font-medium"
             >
               View All

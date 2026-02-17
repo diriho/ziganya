@@ -1,12 +1,21 @@
-import React from 'react'
+import type { ReactNode } from "react";
 
-/* Settings Section definition */
-function SettingsSection({ title, description, children }: { title: string, description: string, children: React.ReactNode }) {
+interface SettingsSectionProps {
+  title: string;
+  description: string;
+  children: ReactNode;
+}
+
+export function SettingsSection({
+  title,
+  description,
+  children,
+}: SettingsSectionProps) {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-lg font-bold text-[#063b1e]">{title}</h3>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">{description}</p>
+        <h2 className="text-lg font-semibold text-zinc-900">{title}</h2>
+        <p className="mt-0.5 text-sm text-zinc-500">{description}</p>
       </div>
       {children}
     </div>

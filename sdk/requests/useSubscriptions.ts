@@ -1,14 +1,16 @@
 import { dbClient, type SubscriptionInsert } from "@sdk/db";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-export const useSubscriptions = (userId: string) => {
+export const useSubscriptions = (userId: string, limit?: number) => {
   return useQuery({
     queryKey: ["subscriptions", userId],
     queryFn: async () => {
+      const rowLimit = typeof limit === "number" ? limit : 100;
       const { data, error } = await dbClient
         .from("subscriptions")
         .select("*")
         .eq("user_id", userId)
+        .limit(rowLimit)
         .order("next_billing_date", { ascending: true, nullsFirst: false });
       if (error) throw error;
       return data ?? [];
