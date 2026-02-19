@@ -6,9 +6,7 @@ import { useUser,useUserUpdate } from "@sdk/requests";
 import { useState } from "react";
 
 export default function Profile() {
-  const { data: userList, isLoading, error } = useUser(USERID);
-  const user = userList?.[0];
-
+  const { data: user, isLoading, error } =  useUser(USERID);
   const [username, setUsername] = useState(user?.username ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
 

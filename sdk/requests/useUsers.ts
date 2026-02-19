@@ -9,9 +9,10 @@ export const useUser = (userId: string) => {
       const { data, error } = await dbClient
         .from("users")
         .select("*")
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .maybeSingle();
       if (error) throw error;
-      return data ?? [];
+      return data;
     },
     enabled: !!userId,
   });
@@ -25,7 +26,6 @@ export const useUsers = () =>{
                 .from('users')
                 .select("*")
             if (error) throw error;
-            console.log("The db user:", data)
             return data ?? []
         }
     })

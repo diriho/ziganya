@@ -33,3 +33,15 @@ export function formatSubscriptionAmount(amount: number, currency: string): stri
     ? formatCurrency(amount, "USD")
     : `${amount.toFixed(2)} ${currency}`;
 }
+export function formatLongDate(dateKey: string): string {
+  return formatDate(dateKey, {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+export function formatAmount(amount: number, currency: string): string {
+  return formatCurrency(amount, currency || "USD");
+}

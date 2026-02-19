@@ -1,60 +1,18 @@
 import { useState, useRef } from "react";
-import { MoreHorizontal, Receipt, Smartphone, Upload, X, Check } from "lucide-react";
-
-interface ActivityItemProps {
-    icon: React.ReactNode;
-    title: string;
-    subtitle: string;
-    amount: string;
-    category: string;
-}
-
-const ActivityItem = ({ icon, title, subtitle, amount, category }: ActivityItemProps) => {
-    return (
-        <div className="flex items-start gap-4 group">
-            {/* Icon */}
-            <div className="
-                w-10 h-10 rounded-xl bg-zinc-50 border border-zinc-100
-                flex items-center justify-center
-                text-brand-green
-                group-hover:bg-brand-green-light/10 group-hover:border-brand-green-light/20
-                transition-all duration-200
-                flex-shrink-0
-            ">
-                {icon}
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-bold text-zinc-900 mb-1 truncate">
-                            {title}
-                        </h4>
-                        <p className="text-xs text-zinc-500 mb-2">
-                            {subtitle}
-                        </p>
-                        <span className="inline-block text-xs font-medium text-zinc-400 uppercase tracking-wide">
-                            {category}
-                        </span>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-bold text-zinc-900">
-                            {amount}
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
+import { MoreHorizontal, Receipt,Upload, X, Check } from "lucide-react";
+import { ActivityItem } from "./ActivityItem";
+import { useSubscriptions, useTransactions } from "@sdk/requests";
+import { USERID,CURRENT_USER_ID } from "@/lib/constants";
+import { formatDate } from "@/lib/format";
 export const RecentActivities = () => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadSuccess, setUploadSuccess] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const {data:transactions} = useTransactions(CURRENT_USER_ID,2);
+    const {data:subscriptions} = useSubscriptions(CURRENT_USER_ID,1);
 
+    // console.log(transactions)
     const handleFileSelect = () => {
         fileInputRef.current?.click();
     };
@@ -62,7 +20,6 @@ export const RecentActivities = () => {
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
-
         // Validate file type
         const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'application/pdf'];
         if (!validTypes.includes(file.type)) {
@@ -135,28 +92,26 @@ export const RecentActivities = () => {
 
             {/* Activity Items */}
             <div className="flex flex-col gap-6">
-                {/* TODO: replace with database data */}
-                <ActivityItem 
+                {transactions?.map((transaction) =>(
+                    <ActivityItem 
                     icon={<Receipt size={18} />} 
-                    title="Starbucks Coffee" 
+                    title={transaction.merchant_name ?? "Unknown"}
                     subtitle="Receipt parsed • 2m ago" 
                     amount="-$4.50"
                     category="Food & Drink"
                 />
+                ))}
+                {subscriptions?.map((subs) => (
+    
                 <ActivityItem 
-                    icon={<Smartphone size={18} />} 
-                    title="Apple Music" 
-                    subtitle="SMS detected • 1h ago" 
-                    amount="-$10.99"
-                    category="Entertainment"
-                />
-                <ActivityItem 
-                    icon={<Receipt size={18} />} 
-                    title="Uber Ride" 
-                    subtitle="Screenshot • 4h ago" 
-                    amount="-$24.20"
-                    category="Transport"
-                />
+                icon={<Receipt size={18} />} 
+                title={subs.name ?? "Unknown"}
+                subtitle=""
+                amount={String(subs.amount)}
+                category={`next pay is : ${formatDate(subs.next_billing_date)}`}
+            />
+                ))}
+                
             </div>
 
             {/* Hidden File Input */}

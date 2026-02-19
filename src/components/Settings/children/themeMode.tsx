@@ -49,6 +49,7 @@ export default function ThemeMode() {
           type="button"
           onClick={toggleTheme}
           role="switch"
+          aria-label="switch theme"
           aria-checked={theme === "dark"}
           className={`relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 ${
             theme === "dark" ? "bg-brand-green" : "bg-zinc-200"

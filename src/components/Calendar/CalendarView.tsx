@@ -157,7 +157,7 @@ export const CalendarView = ({ userId }: CalendarViewProps) => {
 
   return (
     <section className="space-y-6" aria-labelledby="calendar-title">
-      <header className="overflow-hidden rounded-3xl border border-zinc-200 bg-gradient-to-r from-[#0b4b28] via-[#0f5f33] to-[#1a7a47] p-6 text-white shadow-sm">
+      <header className="overflow-hidden rounded-3xl p-6 text-white shadow-sm bg-brand-green">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-100/90">
