@@ -5,7 +5,7 @@ import Button from "../components/Button";
 import { motion } from "framer-motion";
 import { ArrowRight, CreditCard, Receipt, Smartphone } from "lucide-react";
 import Feature from "../components/Feature";
-import UIMock from "../components/UIMockup";
+import UIMock from "../components/Home";
 import Footer from "../components/Footer";
 import { Link } from "react-router";
 

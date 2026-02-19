@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { MoreHorizontal, Receipt,Upload, X, Check } from "lucide-react";
 import { ActivityItem } from "./ActivityItem";
 import { useSubscriptions, useTransactions } from "@sdk/requests";
-import { USERID,CURRENT_USER_ID } from "@/lib/constants";
+import { CURRENT_USER_ID } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 export const RecentActivities = () => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
