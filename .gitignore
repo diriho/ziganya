@@ -34,4 +34,3 @@ dev-docs/
 
 # Local Netlify folder
 .netlify
-.env*
