@@ -1,15 +1,50 @@
+import React, { useState } from "react";
 import { Bell, CircleUser, Plus, Download } from "lucide-react"
 import { SearchInput } from "../SearchInput"
+import { TransactionModal } from "@/components/Transactions";
+import { useTransactions } from "@sdk/requests";
+import { CURRENT_USER_ID } from "@/lib/constants";
 
 interface HeaderProps {
     isSidebarOpen?: boolean;
 }
 
 export const Header = ({ isSidebarOpen = true }: HeaderProps) => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const { data: transactions = [] } = useTransactions(CURRENT_USER_ID);
+    
     const user = {
         username: 'Tharcisse',
         email: 'tharcisse@gmail.com'
     }
+
+    const handleExportData = (e:React.MouseEvent) => {
+        e.preventDefault()
+        const headers = ["Date", "Merchant", "Type", "Amount", "Source", "Currency"];
+        const rows = transactions.map(transaction => [
+            transaction.transaction_date,
+            transaction.merchant_name || "",
+            transaction.type || "",
+            transaction.amount.toString(),
+            transaction.source,
+            transaction.currency || "USD"
+        ]);
+
+        const csvContent = [
+            headers.join(","),
+            ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `transactions-${new Date().toISOString().split("T")[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+    };
     return (
         <div>
             {/* Top bar - search, notifications, user */}
@@ -62,16 +97,23 @@ export const Header = ({ isSidebarOpen = true }: HeaderProps) => {
                 
                 {/* Action buttons - stack on mobile */}
                 <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 sm:gap-3">
-                    <button className="bg-brand-green text-brand-green-light px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 text-sm sm:text-base font-medium hover:opacity-90 transition-opacity">
+                    <button 
+                        onClick={() => setIsModalOpen(true)}
+                        className="bg-brand-green text-brand-green-light px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 text-sm sm:text-base font-medium hover:opacity-90 transition-opacity"
+                    >
                         <Plus size={16} className="sm:w-[18px] sm:h-[18px]" />
                         <span>Add Transaction</span>
                     </button>
-                    <button className="bg-white text-brand-green border border-zinc-200 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 text-sm sm:text-base font-medium hover:bg-zinc-50 transition-colors">
+                    <button 
+                        onClick={handleExportData}
+                        className="bg-white text-brand-green border border-zinc-200 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 text-sm sm:text-base font-medium hover:bg-zinc-50 transition-colors"
+                    >
                         <Download size={16} className="sm:w-[18px] sm:h-[18px]" />
                         <span>Export Data</span>
                     </button>
                 </div>
             </div>
+            <TransactionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
         </div>
     );
 }

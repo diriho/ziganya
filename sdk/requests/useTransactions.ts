@@ -36,6 +36,7 @@ export const useTransaction = (userId: string, transactionId: string | null) => 
 };
 
 export const useCreateTransaction = (userId: string) => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (transaction: Omit<TransactionInsert, "user_id">) => {
       const { data, error } = await dbClient
@@ -45,6 +46,9 @@ export const useCreateTransaction = (userId: string) => {
         .single();
       if (error) throw error;
       return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions", userId] });
     },
   });
 };

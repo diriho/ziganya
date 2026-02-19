@@ -1,5 +1,5 @@
 import { Repeat2, ReceiptText } from "lucide-react";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatLongDate, formatAmount } from "@/lib/format";
 import type { CalendarActivity } from "./types";
 
 interface ActivityFeedProps {
@@ -73,15 +73,3 @@ export const ActivityFeed = ({ groupedActivities, total }: ActivityFeedProps) =>
   </div>
 );
 
-function formatLongDate(dateKey: string): string {
-  return formatDate(dateKey, {
-    weekday: "long",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatAmount(amount: number, currency: string): string {
-  return formatCurrency(amount, currency || "USD");
-}
