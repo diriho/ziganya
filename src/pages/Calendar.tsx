@@ -1,4 +1,12 @@
 import { CalendarView } from "@/components/Calendar";
-import { CURRENT_USER_ID } from "@/lib/constants";
+import { useCurrentUser } from "@sdk/requests";
 
-export const CalendarPage = () => <CalendarView userId={CURRENT_USER_ID} />;
+export const CalendarPage = () => {
+	const { user, isLoading } = useCurrentUser();
+
+	if (isLoading || !user?.userID) {
+		return <div>Loading...</div>;
+	}
+
+	return <CalendarView userId={user.userID} />;
+};

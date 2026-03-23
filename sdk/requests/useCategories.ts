@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 export const useCategories = (userId: string) => {
   return useQuery({
     queryKey: ["categories", userId],
+    enabled: !!userId,
     queryFn: async () => {
       const { data, error } = await dbClient
         .from("categories")

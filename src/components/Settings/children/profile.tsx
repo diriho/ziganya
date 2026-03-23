@@ -1,16 +1,21 @@
 import React from "react";
 import SettingsSection from "../settinSection/index";
-import { USERID } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
-import { useUser,useUserUpdate } from "@sdk/requests";
-import { useState } from "react";
+import { useCurrentUser, useUser, useUserUpdate } from "@sdk/requests";
+import { useState, useEffect } from "react";
 
 export default function Profile() {
-  const { data: user, isLoading, error } =  useUser(USERID);
-  const [username, setUsername] = useState(user?.username ?? "");
-  const [email, setEmail] = useState(user?.email ?? "");
+  const { user: currentUser, isLoading: currentUserLoading } = useCurrentUser();
+  const { data: user, isLoading, error } =  useUser(currentUser?.userID ?? "");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
 
-  const updateUserMutation = useUserUpdate(USERID);
+  const updateUserMutation = useUserUpdate(currentUser?.userID ?? "");
+
+  useEffect(() => {
+    setUsername(user?.username ?? "");
+    setEmail(user?.email ?? "");
+  }, [user?.username, user?.email]);
  
 
   const handleSave = (e:React.MouseEvent<HTMLButtonElement>) =>{
@@ -23,8 +28,8 @@ export default function Profile() {
 
 
   if (error) return <div className="text-red-900">Error loading profile: {error.message}</div>;
-  if (isLoading) return <div>Loading user info…</div>;
-  if (!USERID) {
+  if (currentUserLoading || isLoading) return <div>Loading user info…</div>;
+  if (!currentUser?.userID) {
     return (
       <SettingsSection title="Profile" description="Update your personal details and how others see you.">
         <div className="rounded-2xl border border-zinc-100 bg-white p-6 shadow-sm text-center text-zinc-500">

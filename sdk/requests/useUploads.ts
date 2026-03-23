@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 export const useUploads = (userId: string) => {
   return useQuery({
     queryKey: ["uploads", userId],
+    enabled: !!userId,
     queryFn: async () => {
       const { data, error } = await dbClient
         .from("uploads")

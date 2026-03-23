@@ -1,5 +1,70 @@
+import { useEffect, useState } from "react";
 import { dbClient, type UserUpdate } from "@sdk/db";
-import { useMutation, useQuery,useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+export interface CurrentUserProfile {
+  username: string;
+  email: string;
+  userID: string;
+  lastSignedID: string;
+}
+
+const buildCurrentUserProfile = (
+  session: Awaited<ReturnType<typeof dbClient.auth.getSession>>["data"]["session"]
+): CurrentUserProfile | null => {
+  if (!session?.user) {
+    return null;
+  }
+
+  return {
+    username:
+      session.user.user_metadata?.full_name?.split(" ")?.[0] ??
+      session.user.user_metadata?.username ??
+      session.user.email?.split("@")[0] ??
+      "User",
+    email: session.user.email ?? "",
+    userID: session.user.id ?? "",
+    lastSignedID: session.user.last_sign_in_at ?? "",
+  };
+};
+
+export const useCurrentUser = () => {
+  const [user, setUser] = useState<CurrentUserProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const syncUser = async () => {
+      const {
+        data: { session },
+      } = await dbClient.auth.getSession();
+
+      if (!isMounted) {
+        return;
+      }
+
+      setUser(buildCurrentUserProfile(session));
+      setIsLoading(false);
+    };
+
+    void syncUser();
+
+    const {
+      data: { subscription },
+    } = dbClient.auth.onAuthStateChange((_event, session) => {
+      setUser(buildCurrentUserProfile(session));
+      setIsLoading(false);
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  return { user, isLoading };
+};
 
 
 export const useUser = (userId: string) => {
@@ -45,11 +110,9 @@ export const useUserUpdate = (userId: string) => {
     return useMutation({
         mutationKey: ['users_update', userId],
         mutationFn: async (payload: UserUpdate) => {
-            // update user by user_id using the payload
-            const { data, error } = await dbClient
-                .from('users')
-                .update(payload)
-                .eq("user_id", userId)
+      const { data, error } = await dbClient
+        .from('users')
+        .upsert({ ...payload, user_id: userId }, { onConflict: "user_id" })
                 .select()
                 .single();
             if (error) throw error;

@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 export const useSubscriptions = (userId: string, limit?: number) => {
   return useQuery({
     queryKey: ["subscriptions", userId,limit],
+    enabled: !!userId,
     queryFn: async () => {
       const rowLimit = typeof limit === "number" ? limit : 100;
       const { data, error } = await dbClient

@@ -1,4 +1,6 @@
 import { useSubscriptions, useTransactions } from "@sdk/requests";
+import { useCurrentUser } from "@sdk/requests";
+import { useUser } from "@sdk/requests";
 import {
   InfoCard,
   SpendingAnalytics,
@@ -6,20 +8,24 @@ import {
   Budget,
   Subscriptions,
 } from "@components/Dashboard";
+import { formatCurrency } from "@/lib/format";
 
 
 /** Content only: for use inside DashboardLayout (Outlet). */
 export const DashboardHome = () => {
-  const userId = import.meta.env.VITE_TEST_USER;
-  const { data: subscriptions, isLoading: subsLoading } = useSubscriptions(userId);
-  const { data: transactions, isLoading: txLoading } = useTransactions(userId, 10);
+  const { user, isLoading: userLoading } = useCurrentUser();
+  const { data: userRow, isLoading: userRowLoading } = useUser(user?.userID ?? "");
+  const { data: subscriptions, isLoading: subsLoading } = useSubscriptions(user?.userID ?? "");
+  const { data: transactions, isLoading: txLoading } = useTransactions(user?.userID ?? "", 10);
   const summarySubscriptions = subscriptions?.slice(0, 5) ?? [];
 
+  const totalBalance = Number(userRow?.total_balance ?? 0);
+  const savingsGoal = Number(userRow?.savings_goal ?? 0);
   const totalSpending =
     transactions?.reduce((sum: number, t: { amount: number }) => sum + t.amount, 0) ?? 0;
   const subscriptionCount = subscriptions?.length ?? 0;
 
-  if (subsLoading || txLoading) return <div>Loading...</div>;
+  if (userLoading || userRowLoading || subsLoading || txLoading) return <div>Loading...</div>;
 
   return (
     <>
@@ -28,32 +34,32 @@ export const DashboardHome = () => {
           <div className="flex gap-4 min-w-max pl-4 sm:pl-6">
             <InfoCard
               title="Total Balance"
-              value="$20000"
+              value={formatCurrency(totalBalance)}
               trend="+12.5%"
               trendUp={true}
               accentColor="#063b1e"
-              className="min-w-[280px] sm:min-w-[300px] flex-shrink-0"
+              className="min-w-70 sm:min-w-75 shrink-0"
             />
             <InfoCard
               title="Monthly Spending"
               value={`${totalSpending.toFixed(2)}`}
               trend="-2.4%"
               trendUp={false}
-              className="min-w-[280px] sm:min-w-[300px] flex-shrink-0"
+              className="min-w-70 sm:min-w-75 shrink-0"
             />
             <InfoCard
               title="Active Subscriptions"
               value={String(subscriptionCount)}
               trend="+1 this month"
               trendUp={true}
-              className="min-w-[280px] sm:min-w-[300px] flex-shrink-0"
+              className="min-w-70 sm:min-w-75 shrink-0"
             />
             <InfoCard
               title="Savings Goal"
-              value="$45,000"
+              value={formatCurrency(savingsGoal)}
               trend="74% reached"
               trendUp={true}
-              className="min-w-[280px] sm:min-w-[300px] flex-shrink-0"
+              className="min-w-70 sm:min-w-75 shrink-0"
             />
           </div>
         </div>

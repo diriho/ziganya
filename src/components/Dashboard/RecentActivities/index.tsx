@@ -1,16 +1,16 @@
 import { useState, useRef } from "react";
 import { MoreHorizontal, Receipt,Upload, X, Check } from "lucide-react";
 import { ActivityItem } from "./ActivityItem";
-import { useSubscriptions, useTransactions } from "@sdk/requests";
-import { CURRENT_USER_ID } from "@/lib/constants";
+import { useCurrentUser, useSubscriptions, useTransactions } from "@sdk/requests";
 import { formatDate } from "@/lib/format";
 export const RecentActivities = () => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [uploadSuccess, setUploadSuccess] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const {data:transactions} = useTransactions(CURRENT_USER_ID,2);
-    const {data:subscriptions} = useSubscriptions(CURRENT_USER_ID,1);
+    const { user } = useCurrentUser();
+    const {data:transactions} = useTransactions(user?.userID ?? "",2);
+    const {data:subscriptions} = useSubscriptions(user?.userID ?? "",1);
 
     // console.log(transactions)
     const handleFileSelect = () => {

@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 export const useBudgets = (userId:string) =>{
     return useQuery({
         queryKey: ["budgets",userId],
+    enabled: !!userId,
         queryFn: async () => {
             // now make db client call
             const {data,error} = await dbClient

@@ -1,6 +1,5 @@
 import { useMemo } from "react";
-import { useSubscriptions } from "@sdk/requests";
-import { CURRENT_USER_ID } from "@/lib/constants";
+import { useCurrentUser, useSubscriptions } from "@sdk/requests";
 import { PageLoading, PageError } from "@/components/PageState";
 import {
   SubscriptionSection,
@@ -10,8 +9,9 @@ import { TransactionChart, type ChartDataPoint } from "@/components/Transactions
 import { formatDate } from "@/lib/format";
 
 export const SubscriptionPage = () => {
+  const { user, isLoading: userLoading } = useCurrentUser();
   const { data: subscriptions = [], isLoading, error } =
-    useSubscriptions(CURRENT_USER_ID);
+    useSubscriptions(user?.userID ?? "");
 
   const { upcoming, past } = useMemo(
     () => groupSubscriptionsByBilling(subscriptions),
@@ -35,7 +35,7 @@ export const SubscriptionPage = () => {
       .sort((a, b) => a.dateKey.localeCompare(b.dateKey));
   }, [subscriptions]);
 
-  if (isLoading) return <PageLoading />;
+  if (userLoading || isLoading) return <PageLoading />;
   if (error) return <PageError message="Error loading subscriptions." />;
 
   const hasAny = upcoming.length > 0 || past.length > 0;

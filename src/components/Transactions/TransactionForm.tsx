@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { useCreateTransaction, useCategories } from "@sdk/requests";
-import { CURRENT_USER_ID } from "@/lib/constants";
+import { useCategories, useCreateTransaction, useCurrentUser } from "@sdk/requests";
 import type { TransactionInsert } from "@sdk/db";
 
 interface TransactionFormProps {
@@ -9,6 +8,7 @@ interface TransactionFormProps {
 }
 
 export const TransactionForm = ({ onSuccess, onCancel }: TransactionFormProps) => {
+  const { user, isLoading: userLoading } = useCurrentUser();
   const [formData, setFormData] = useState<Omit<TransactionInsert, "user_id">>({
     amount: 0,
     type: "expense",
@@ -21,8 +21,12 @@ export const TransactionForm = ({ onSuccess, onCancel }: TransactionFormProps) =
     notes: null,
   });
 
-  const createTransaction = useCreateTransaction(CURRENT_USER_ID);
-  const { data: categories = [] } = useCategories(CURRENT_USER_ID);
+  const createTransaction = useCreateTransaction(user?.userID ?? "");
+  const { data: categories = [] } = useCategories(user?.userID ?? "");
+
+  if (userLoading || !user?.userID) {
+    return <div className="py-6 text-center text-zinc-500">Loading user info…</div>;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

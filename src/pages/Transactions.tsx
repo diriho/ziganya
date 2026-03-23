@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
-import { useTransactions } from "@sdk/requests";
-import { CURRENT_USER_ID } from "@/lib/constants";
+import { useCurrentUser, useTransactions } from "@sdk/requests";
 import { PageLoading, PageError } from "@/components/PageState";
 import {
   TransactionChart,
@@ -14,8 +13,9 @@ import {
 export const TransactionsPage = () => {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const { user, isLoading: userLoading } = useCurrentUser();
 
-  const { data: transactions = [], isLoading, error } = useTransactions(CURRENT_USER_ID);
+  const { data: transactions = [], isLoading, error } = useTransactions(user?.userID ?? "");
 
   const { filtered, totals } = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -42,7 +42,7 @@ export const TransactionsPage = () => {
     };
   }, [transactions, typeFilter, searchQuery]);
 
-  if (isLoading) return <PageLoading />;
+  if (userLoading || isLoading) return <PageLoading />;
   if (error) return <PageError message="Unable to fetch transactions." />;
 
   return (

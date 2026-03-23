@@ -3,15 +3,9 @@
  * Single source of truth for display formatting across pages and components.
  */
 
-export function formatCurrency(amount: number, currency = "USD"): string {
-  try {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency,
-    }).format(amount);
-  } catch {
-    return `${amount.toFixed(2)} ${currency}`;
-  }
+export function formatCurrency(amount: number): string {
+  return `$ ${amount.toFixed(2)}`;
+
 }
 
 const timeOptions: Intl.DateTimeFormatOptions = {
