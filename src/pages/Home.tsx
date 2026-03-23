@@ -1,5 +1,4 @@
-
-
+import { useState } from "react";
 import Header from "../components/Header";
 import Button from "../components/Button";
 import { motion } from "framer-motion";
@@ -7,9 +6,32 @@ import { ArrowRight, CreditCard, Receipt, Smartphone } from "lucide-react";
 import Feature from "../components/Feature";
 import UIMock from "../components/Home";
 import Footer from "../components/Footer";
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
+import Login from "./Login";
+import { dbClient } from "@sdk/db";
 
 export default function Home() {
+  const navigate = useNavigate();
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+
+  const handleGetStarted = async () => {
+    const {
+      data: { session },
+    } = await dbClient.auth.getSession();
+
+    if (session?.user) {
+      navigate("/dashboard");
+      return;
+    }
+
+    setIsLoginOpen(true);
+  };
+
+  const handleLoginSuccess = () => {
+    setIsLoginOpen(false);
+    navigate("/dashboard");
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-[#fcfcfc] overflow-hidden">
       <Header />
@@ -30,8 +52,8 @@ export default function Home() {
                 Ziganya captures your spending from receipts, bank screenshots, and messages. No manual data entry, just magic.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Button type="button" variant="primary" className="group relative flex items-center gap-2 px-8 py-4 bg-[#063b1e] text-[#6eff8a] rounded-full font-bold text-lg shadow-[0_10px_32px_0_rgba(6,59,30,0.1)] transition-all duration-200 hover:bg-black active:scale-95">
-                  <Link to="/dashboard">Get Started</Link>
+                <Button type="button" variant="primary" className="group relative flex items-center gap-2 px-8 py-4 bg-[#063b1e] text-[#6eff8a] rounded-full font-bold text-lg shadow-[0_10px_32px_0_rgba(6,59,30,0.1)] transition-all duration-200 hover:bg-black active:scale-95" onClick={handleGetStarted}>
+                  <span>Get Started</span>
                   <ArrowRight className="transition-transform duration-200 group-hover:translate-x-1" />
                 </Button>
                 <Button type="button" variant="secondary" className="px-8 py-4 bg-white border border-[#e4e4e7] rounded-full font-bold text-lg transition-transform duration-200 hover:bg-[#f4f4f5] active:scale-95">
@@ -75,12 +97,14 @@ export default function Home() {
             <h2 className="text-5xl md:text-[4.5rem] font-bold text-[#6eff8a] mb-12 tracking-[-0.02em]">
               Take control of your cash.<br />Starting today.
             </h2>
-            <Button type="button" variant="primary" className="inline-block px-12 py-6 bg-white text-[#063b1e] rounded-full font-bold text-xl shadow-[0_12px_40px_0_rgba(6,59,30,0.15)] transition-all duration-200 hover:bg-[#6eff8a] hover:text-[#063b1e] hover:scale-105 transform">
-              <Link to="/dashboard">Get Started</Link>
+            <Button type="button" variant="primary" className="inline-block px-12 py-6 bg-white text-[#063b1e] rounded-full font-bold text-xl shadow-[0_12px_40px_0_rgba(6,59,30,0.15)] transition-all duration-200 hover:bg-[#6eff8a] hover:text-[#063b1e] hover:scale-105 transform" onClick={handleGetStarted}>
+              <span>Get Started</span>
             </Button>
           </div>
         </section>
       </main>
+
+      <Login isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} onSuccess={handleLoginSuccess} />
       
       <Footer />
     </div>

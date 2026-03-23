@@ -5,9 +5,10 @@ import SignIn from "../components/SignIn";
 interface LoginProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ isOpen, onClose }) => {
+const Login: React.FC<LoginProps> = ({ isOpen, onClose, onSuccess }) => {
   if (!isOpen) return null;
 
   return createPortal(
@@ -16,7 +17,7 @@ const Login: React.FC<LoginProps> = ({ isOpen, onClose }) => {
         <button className="absolute top-2.5 right-2.5 bg-transparent border-none text-xl cursor-pointer text-[#666] hover:text-white" onClick={onClose}>
           &times;
         </button>
-        <SignIn onSuccess={onClose} />
+        <SignIn onSuccess={onSuccess ?? onClose} />
       </div>
     </div>,
     document.body
