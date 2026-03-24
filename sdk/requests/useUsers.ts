@@ -5,8 +5,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 export interface CurrentUserProfile {
   username: string;
   email: string;
+  fullName: string;
   userID: string;
-  lastSignedID: string;
+  lastSignedIn: string;
+  createdAt: string;
 }
 
 const buildCurrentUserProfile = (
@@ -22,9 +24,11 @@ const buildCurrentUserProfile = (
       session.user.user_metadata?.username ??
       session.user.email?.split("@")[0] ??
       "User",
+    fullName: session.user.user_metadata?.full_name ?? "",
     email: session.user.email ?? "",
     userID: session.user.id ?? "",
-    lastSignedID: session.user.last_sign_in_at ?? "",
+    lastSignedIn: session.user.last_sign_in_at ?? "",
+    createdAt: session.user.created_at ?? "",
   };
 };
 
