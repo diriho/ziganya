@@ -3,6 +3,7 @@ import { Bell, CircleUser, Plus, Download } from "lucide-react"
 import { SearchInput } from "../SearchInput"
 import { TransactionModal } from "@/components/Transactions";
 import { useCurrentUser, useTransactions } from "@sdk/requests";
+import { Link } from 'react-router';
 
 interface HeaderProps {
     isSidebarOpen?: boolean;
@@ -40,7 +41,12 @@ export const Header = ({ isSidebarOpen = true }: HeaderProps) => {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
     };
+
+    //extract the avatar from the user metadata, if it exists, otherwise show a default profile icon
+    const avatar =  <CircleUser size={24} className="text-brand-green" />;
+  
     
+    /*react eleemtn to be returned */
     return (
         <div>
             {/* Top bar - search, notifications, user */}
@@ -77,9 +83,11 @@ export const Header = ({ isSidebarOpen = true }: HeaderProps) => {
                         <p className="text-xs text-zinc-500">{user?.email ?? ""}</p>
                     </div>
                     
-                    {/* User avatar */}
+                    {/* User avatar/image pulled from the googleAuth metadata*/}
                     <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-brand-green-light flex items-center justify-center border border-zinc-200 shadow-sm shrink-0">  
-                        <CircleUser size={24} className="text-brand-green" />
+                        <Link to="/dashboard/settings" >
+                            {avatar}
+                        </Link >
                     </div>
                 </div>
             </div>

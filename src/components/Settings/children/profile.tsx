@@ -2,22 +2,16 @@ import React from "react";
 import SettingsSection from "../settinSection/index";
 import { formatDate } from "@/lib/format";
 import { useCurrentUser, useUser, useUserUpdate } from "@sdk/requests";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export default function Profile() {
   const { user: currentUser, isLoading: currentUserLoading } = useCurrentUser();
   const { data: user, isLoading, error } =  useUser(currentUser?.userID ?? "");
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState(user?.username ?? "");
+  const [email, setEmail] = useState(user?.email ?? "");
 
   const updateUserMutation = useUserUpdate(currentUser?.userID ?? "");
-
-  useEffect(() => {
-    setUsername(user?.username ?? "");
-    setEmail(user?.email ?? "");
-  }, [user?.username, user?.email]);
  
-
   const handleSave = (e:React.MouseEvent<HTMLButtonElement>) =>{
     e.preventDefault();
     updateUserMutation.mutate({
