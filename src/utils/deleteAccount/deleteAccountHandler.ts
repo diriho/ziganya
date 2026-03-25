@@ -19,7 +19,11 @@ export async function deleteAccount() {
     const { error } = await dbClient.from(table).delete().eq("user_id", userId);
 
     if (error) {
-      throw new Error(error.message || `Failed to delete ${table}.`);
+        return {
+            error,
+            message: error.message || `Failed to delete ${table}.`,
+            timestamp: new Date().toISOString(),
+        }
     }
   }
 
