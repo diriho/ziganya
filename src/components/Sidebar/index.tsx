@@ -47,6 +47,7 @@ const deriveActiveItem = (pathname: string) => {
   return match?.[1] ?? defaultPath;
 };
 
+
 export const Sidebar = (props: SidebarProps = {}) => {
   const { 
       isOpen: externalIsOpen, 
@@ -68,6 +69,8 @@ export const Sidebar = (props: SidebarProps = {}) => {
         onItemSelect(itemText);
     }
   };
+
+
 
   const menuSections = useMemo(() => [
       {

@@ -1,6 +1,5 @@
 import ThemeMode from "./children/themeMode";
 import Profile from "./children/profile";
-import Security from "./children/security";
 import DeleteAccount from "./children/deleteAcc";
 
 export default function SettingsPage() {
@@ -18,10 +17,10 @@ export default function SettingsPage() {
         </p>
       </header>
 
+
       <div className="space-y-8">
-        <ThemeMode />
         <Profile />
-        <Security />
+        <ThemeMode />
         <DeleteAccount />
       </div>
     </section>
