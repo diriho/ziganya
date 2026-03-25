@@ -38,7 +38,7 @@ export default function Home() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative pt-40 pb-20 px-4">
+        <section id="about" className="relative pt-40 pb-20 px-4">
           <div className="max-w-[1200px] mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -69,7 +69,7 @@ export default function Home() {
         </section>
 
         {/* Features Section */}
-        <section className="py-24 bg-white border-y border-[#f4f4f5]">
+        <section id="features" className="py-24 bg-white border-y border-[#f4f4f5]">
           <div className="max-w-[1200px] mx-auto px-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
               <Feature
@@ -92,7 +92,7 @@ export default function Home() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-20 px-4 bg-[#063b1e]">
+        <section id="contact" className="py-20 px-4 bg-[#063b1e]">
           <div className="max-w-[1200px] mx-auto text-center">
             <h2 className="text-5xl md:text-[4.5rem] font-bold text-[#6eff8a] mb-12 tracking-[-0.02em]">
               Take control of your cash.<br />Starting today.

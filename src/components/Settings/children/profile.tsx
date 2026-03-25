@@ -31,7 +31,7 @@ export default function Profile() {
       description="Update your personal details and how others see you."
     >
       <div className="rounded-2xl border border-zinc-100 bg-white p-6 shadow-sm">
-        <div className="flex items-center gap-6 bg-[#F3F3F5] p-8 rounded-xl w-auto transition-transform duration-300 hover:scale-105 hover:shadow-[0_4px_8px_rgba(0,0,0,0.5)]">
+        <div className="flex items-center gap-6 bg-[#F3F3F5] p-8 rounded-xl w-auto hover:shadow-[0_4px_8px_rgba(0,0,0,0.5)]">
   
           {/* User avatar/image pulled from the googleAuth metadata, if it exists, otherwise show a default profile icon*/}
           <div><CircleUser className="h-16 w-16 text-gray-500" /></div>

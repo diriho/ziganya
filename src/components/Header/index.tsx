@@ -40,9 +40,9 @@ const Header = () => {
           <div className="w-[3px] h-6 bg-[#6eff8a] rounded-full transition-transform duration-200 group-hover:scale-y-125" />
         </div>
         <div className="hidden md:flex gap-8 items-center">
-          <a href="#" className="text-sm font-bold text-zinc-500 hover:text-[#063b1e] transition-colors duration-200 no-underline">Features</a>
-          <a href="#" className="text-sm font-bold text-zinc-500 hover:text-[#063b1e] transition-colors duration-200 no-underline">About</a>
-          <a href="#" className="text-sm font-bold text-zinc-500 hover:text-[#063b1e] transition-colors duration-200 no-underline">Contact</a>
+          <a href="#about" className="text-sm font-bold text-zinc-500 hover:text-[#063b1e] transition-colors duration-200 no-underline">About</a>
+          <a href="#features" className="text-sm font-bold text-zinc-500 hover:text-[#063b1e] transition-colors duration-200 no-underline">Features</a>
+          <a href="#contact" className="text-sm font-bold text-zinc-500 hover:text-[#063b1e] transition-colors duration-200 no-underline">Contact</a>
         </div>
         
         {user ? (
