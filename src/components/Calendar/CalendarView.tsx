@@ -103,6 +103,20 @@ export const CalendarView = ({ userId }: CalendarViewProps) => {
     return Array.from({ length: 7 }, (_, index) => addDays(base, index));
   }, [focusedDate]);
 
+  const monthDays = useMemo(() => {
+    const monthStart = startOfMonth(focusedDate);
+    const gridStart = startOfWeek(monthStart);
+    const monthEnd = endOfMonth(focusedDate);
+    const gridEnd = endOfWeek(monthEnd);
+
+    const days: Date[] = [];
+    for (let current = gridStart; current <= gridEnd; current = addDays(current, 1)) {
+      days.push(current);
+    }
+
+    return days;
+  }, [focusedDate]);
+
   const activityCountByDate = useMemo(() => {
     const byDate = new Map<string, number>();
     for (const item of activities) {
@@ -157,7 +171,7 @@ export const CalendarView = ({ userId }: CalendarViewProps) => {
 
   return (
     <section className="space-y-6" aria-labelledby="calendar-title">
-      <header className="overflow-hidden rounded-3xl p-6 text-white shadow-sm bg-brand-green">
+      <header className="overflow-hidden rounded-3xl bg-brand-green p-6 text-white shadow-sm">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-100/90">
@@ -269,6 +283,65 @@ export const CalendarView = ({ userId }: CalendarViewProps) => {
                 </button>
               );
             })}
+          </div>
+        )}
+
+        {view === "month" && (
+          <div className="mt-5 space-y-3">
+            <div className="grid grid-cols-7 gap-2 text-center text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+              {WEEK_DAYS.map((day) => (
+                <div key={day} className="py-1">
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-2">
+              {monthDays.map((date) => {
+                const dateKey = toDateKey(date);
+                const isToday = dateKey === todayKey;
+                const isSelected = selectedDateKey === dateKey;
+                const isMuted = !sameMonth(date, focusedDate);
+                const count = activityCountByDate.get(dateKey) ?? 0;
+
+                return (
+                  <button
+                    key={dateKey}
+                    type="button"
+                    onClick={() =>
+                      setSelectedDateKey((prev) => (prev === dateKey ? null : dateKey))
+                    }
+                    className={`min-h-24 rounded-2xl border p-3 text-left transition ${
+                      isSelected
+                        ? "border-brand-green bg-emerald-50 shadow-sm"
+                        : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
+                    } ${isMuted ? "opacity-55" : ""}`}
+                  >
+                    <p
+                      className={`text-sm font-bold ${
+                        isMuted ? "text-zinc-400" : "text-zinc-900"
+                      }`}
+                    >
+                      {date.getDate()}
+                    </p>
+
+                    {count > 0 ? (
+                      <p className="mt-2 text-xs font-medium text-zinc-500">
+                        {count} {count === 1 ? "activity" : "activities"}
+                      </p>
+                    ) : (
+                      <p className="mt-2 text-xs text-zinc-400">No activity</p>
+                    )}
+
+                    {isToday && (
+                      <span className="mt-2 inline-flex rounded-full bg-brand-green px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                        Today
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
