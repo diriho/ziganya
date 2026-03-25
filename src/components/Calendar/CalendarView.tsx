@@ -236,6 +236,8 @@ export const CalendarView = ({ userId }: CalendarViewProps) => {
           </div>
         </div>
 
+
+        {/*Month View*/}
         {view === "week" && (
           <div className="mt-5 grid grid-cols-7 gap-2">
             {weekDays.map((date) => {
@@ -286,6 +288,8 @@ export const CalendarView = ({ userId }: CalendarViewProps) => {
           </div>
         )}
 
+
+        {/*Month View*/}
         {view === "month" && (
           <div className="mt-5 space-y-3">
             <div className="grid grid-cols-7 gap-2 text-center text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
