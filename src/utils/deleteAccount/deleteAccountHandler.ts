@@ -1,6 +1,7 @@
 import { dbClient } from "@sdk/db";
 
 export async function deleteAccount() {
+  // extract the metadata of the current user from the db
   const { data: sessionData } = await dbClient.auth.getSession();
 
   const userId = sessionData.session?.user.id;
@@ -13,11 +14,13 @@ export async function deleteAccount() {
     };
   }
 
+  // identify the rows/tables in the database we want to delete for the user and delete them
   const tables = ["transactions", "subscriptions", "budgets", "uploads", "categories", "users"] as const;
 
   for (const table of tables) {
     const { error } = await dbClient.from(table).delete().eq("user_id", userId);
 
+    // catch errors and return them in a consistent format so the UI can display them to the user
     if (error) {
         return {
             error,
