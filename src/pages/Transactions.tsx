@@ -1,137 +1,223 @@
 import { useMemo, useState } from "react";
-import { Plus } from "lucide-react";
-import { useCurrentUser, useTransactions } from "@sdk/requests";
-import { PageLoading, PageError } from "@/components/PageState";
-import {
-  TransactionChart,
-  TransactionFilters,
-  TransactionRow,
-  TransactionSummaryCards,
-  type TypeFilter,
-} from "@/components/Transactions";
+import { useSearchParams } from "react-router";
+import { Download, Plus, TrendingUp } from "lucide-react";
+import type { Transaction } from "@sdk/db";
+import { useAuth } from "@sdk/auth";
+import { useCategories, useDeleteTransaction, useTransactions } from "@sdk/requests";
+import { Button, Card, CardHeader, ConfirmDialog, PageHeader, Segmented, useToast } from "@/components/ui";
+import { PageError, PageLoading } from "@/components/PageState";
+import { CashflowChart, ChartTable } from "@/components/charts";
+import { StatTile } from "@/components/Dashboard/StatTile";
+import { dominantCurrency } from "@/components/Dashboard/useDashboardData";
+import { TransactionFilters, TransactionModal, TransactionsTable, type DatePreset, type TypeFilter } from "@/components/Transactions";
+import { bucketTransactions, filterByRange, isIncome, totalsOf, txDateKey, type Bucket } from "@/lib/analytics";
+import { addDays, autoWindow, startOfDay, startOfMonth } from "@/lib/dates";
+import { downloadTextFile, todayStamp, transactionsToCsv } from "@/lib/csv";
+import { formatCurrency } from "@/lib/format";
 
-export const TransactionsPage = () => {
+const PAGE_SIZE = 25;
+
+export function TransactionsPage() {
+  const { user } = useAuth();
+  const userId = user?.userID ?? "";
+  const [params, setParams] = useSearchParams();
+  const toast = useToast();
+
+  const { data: transactions = [], isLoading, error, refetch } = useTransactions(userId, 5000);
+  const { data: categories = [] } = useCategories(userId);
+  const remove = useDeleteTransaction(userId);
+
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const { user, isLoading: userLoading } = useCurrentUser();
+  const [datePreset, setDatePreset] = useState<DatePreset>("all");
+  const [categoryId, setCategoryId] = useState("");
+  const [page, setPage] = useState(1);
+  const [chartView, setChartView] = useState<"chart" | "table">("chart");
+  const [editing, setEditing] = useState<Transaction | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState<Transaction | null>(null);
 
-  const { data: transactions = [], isLoading, error } = useTransactions(user?.userID ?? "");
+  const query = params.get("q") ?? "";
+  const setQuery = (q: string) => {
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (q) next.set("q", q);
+        else next.delete("q");
+        return next;
+      },
+      { replace: true }
+    );
+    setPage(1);
+  };
+  const withReset = <T,>(setter: (v: T) => void) => (v: T) => {
+    setter(v);
+    setPage(1);
+  };
 
-  const { filtered, totals } = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    const filteredTx = transactions.filter((tx) => {
-      const matchesType =
-        typeFilter === "all" || tx.type?.toLowerCase() === typeFilter;
-      const matchesSearch =
-        !q ||
-        (tx.merchant_name?.toLowerCase().includes(q)) ||
-        String(tx.amount).includes(q);
-      return matchesType && matchesSearch;
-    });
+  const currency = useMemo(() => dominantCurrency(transactions), [transactions]);
 
-    const income = filteredTx
-      .filter((tx) => tx.type?.toLowerCase() === "income")
-      .reduce((sum, tx) => sum + tx.amount, 0);
-    const expenses = filteredTx
-      .filter((tx) => tx.type?.toLowerCase() === "expense")
-      .reduce((sum, tx) => sum + tx.amount, 0);
+  const filtered = useMemo(() => {
+    const today = startOfDay(new Date());
+    let rows = transactions;
+    if (datePreset !== "all") {
+      const from = datePreset === "month" ? startOfMonth(today) : addDays(today, datePreset === "30d" ? -29 : -89);
+      rows = filterByRange(rows, from, today);
+    }
+    if (typeFilter !== "all") rows = rows.filter((t) => (typeFilter === "income" ? isIncome(t) : !isIncome(t)));
+    if (categoryId === "__none") rows = rows.filter((t) => !t.category_id);
+    else if (categoryId) rows = rows.filter((t) => t.category_id === categoryId);
+    const q = query.trim().toLowerCase();
+    if (q) {
+      rows = rows.filter(
+        (t) =>
+          t.merchant_name?.toLowerCase().includes(q) ||
+          t.description?.toLowerCase().includes(q) ||
+          t.notes?.toLowerCase().includes(q) ||
+          String(t.amount).includes(q) ||
+          t.source?.toLowerCase().includes(q)
+      );
+    }
+    return rows;
+  }, [transactions, datePreset, typeFilter, categoryId, query]);
 
-    return {
-      filtered: filteredTx,
-      totals: { income, expenses },
-    };
-  }, [transactions, typeFilter, searchQuery]);
+  const totals = useMemo(() => totalsOf(filtered), [filtered]);
+  const buckets = useMemo(() => {
+    const win = autoWindow(filtered.map((t) => txDateKey(t) ?? "").filter(Boolean));
+    return win ? bucketTransactions(filtered, win) : [];
+  }, [filtered]);
 
-  if (userLoading || isLoading) return <PageLoading />;
-  if (error) return <PageError message="Unable to fetch transactions." />;
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount);
+  const pageRows = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const hasFilters = typeFilter !== "all" || datePreset !== "all" || !!categoryId || !!query;
+
+  const exportCsv = () => {
+    downloadTextFile(`ziganya-transactions-${todayStamp()}.csv`, transactionsToCsv(filtered, new Map(categories.map((c) => [c.id, c.name]))));
+    toast.success("Export ready", `${filtered.length} transactions saved as CSV.`);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    try {
+      await remove.mutateAsync(deleting.id);
+      toast.success("Transaction deleted");
+      setDeleting(null);
+    } catch (err) {
+      toast.error("Could not delete", err instanceof Error ? err.message : undefined);
+    }
+  };
+
+  if (isLoading) return <PageLoading />;
+  if (error) return <PageError message="We couldn't load your transactions." onRetry={() => void refetch()} />;
 
   return (
-    <section className="space-y-8" aria-labelledby="transactions-title">
-      <header className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1
-            id="transactions-title"
-            className="text-2xl font-bold tracking-tight text-zinc-900"
-          >
-            My Transactions
-          </h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            Track and manage all your transactions.
-          </p>
-        </div>
-        <button
-          type="button"
-          className="mt-4 flex shrink-0 items-center justify-center gap-2 rounded-xl bg-brand-green px-4 py-3 text-sm font-medium text-white shadow-sm transition-all hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-brand-green focus:ring-offset-2 sm:mt-0"
-          aria-label="Add transaction"
-        >
-          <Plus size={18} aria-hidden />
-          <span>Add Transaction</span>
-        </button>
-      </header>
-
-      <TransactionSummaryCards
-        income={totals.income}
-        expenses={totals.expenses}
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="Ledger"
+        title="Transactions"
+        description="Every expense and income, searchable and exportable."
+        actions={
+          <>
+            <Button variant="secondary" leftIcon={<Download size={16} />} onClick={exportCsv} disabled={filtered.length === 0}>
+              Export CSV
+            </Button>
+            <Button leftIcon={<Plus size={16} />} onClick={() => setCreating(true)}>
+              Add transaction
+            </Button>
+          </>
+        }
       />
 
-      <TransactionChart transactions={filtered} />
+      <section aria-label="Totals for the current filters" className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatTile label="Income" value={formatCurrency(totals.income, currency)} hint={`${filtered.filter(isIncome).length} entries`} className="min-h-[120px]" />
+        <StatTile label="Expenses" value={formatCurrency(totals.expense, currency)} hint={`${filtered.length - filtered.filter(isIncome).length} entries`} className="min-h-[120px]" />
+        <StatTile
+          label="Net"
+          value={formatCurrency(totals.net, currency, { signed: true })}
+          delta={{ text: totals.net >= 0 ? "Positive cash flow" : "Spending exceeds income", direction: totals.net > 0 ? "up" : totals.net < 0 ? "down" : "flat", positive: totals.net >= 0 }}
+          className="min-h-[120px]"
+        />
+      </section>
 
       <TransactionFilters
         typeFilter={typeFilter}
-        onFilterChange={setTypeFilter}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+        onTypeChange={withReset(setTypeFilter)}
+        datePreset={datePreset}
+        onDateChange={withReset(setDatePreset)}
+        searchQuery={query}
+        onSearchChange={setQuery}
+        categoryId={categoryId}
+        onCategoryChange={withReset(setCategoryId)}
+        categories={categories}
       />
 
-      <div className="overflow-hidden rounded-2xl border border-zinc-100 bg-white shadow-sm">
-        <div className="overflow-x-auto scrollbar-hide">
-          <table className="w-full min-w-[640px] border-collapse text-left">
-            <thead>
-              <tr className="border-b border-zinc-100 bg-zinc-50/50">
-                <th className="px-6 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                  Date
-                </th>
-                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                  Merchant
-                </th>
-                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                  Source
-                </th>
-                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                  Status
-                </th>
-                <th className="px-4 py-3.5 pr-6 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                  Amount
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-16 text-center text-sm text-zinc-500"
-                  >
-                    No transactions match your filters.
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((tx) => (
-                  <TransactionRow key={tx.id} transaction={tx} />
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-        {filtered.length > 0 && (
-          <div className="flex items-center justify-between border-t border-zinc-100 px-6 py-3 text-sm text-zinc-500">
-            <span>
-              Showing <strong className="font-medium text-zinc-700">{filtered.length}</strong> of{" "}
-              <strong className="font-medium text-zinc-700">{transactions.length}</strong> transactions
-            </span>
-          </div>
-        )}
-      </div>
-    </section>
+      {buckets.length > 1 && (
+        <Card padding="md">
+          <CardHeader
+            title="Cash flow"
+            subtitle="Income and expenses over the filtered period"
+            action={
+              <Segmented<"chart" | "table">
+                size="sm"
+                ariaLabel="Cash flow view"
+                value={chartView}
+                onChange={setChartView}
+                options={[
+                  { value: "chart", label: "Chart", icon: <TrendingUp size={14} /> },
+                  { value: "table", label: "Table" },
+                ]}
+              />
+            }
+          />
+          {chartView === "chart" ? (
+            <CashflowChart data={buckets} currency={currency} height={250} />
+          ) : (
+            <ChartTable<Bucket>
+              caption="Income and expenses by period"
+              rows={buckets}
+              rowKey={(b) => b.key}
+              columns={[
+                { key: "period", label: "Period", render: (b) => b.longLabel },
+                { key: "income", label: "Income", align: "right", render: (b) => formatCurrency(b.income, currency) },
+                { key: "expense", label: "Expenses", align: "right", render: (b) => formatCurrency(b.expense, currency) },
+                { key: "count", label: "Transactions", align: "right", render: (b) => b.count },
+              ]}
+            />
+          )}
+        </Card>
+      )}
+
+      <TransactionsTable
+        rows={pageRows}
+        total={filtered.length}
+        categories={categories}
+        page={safePage}
+        pageSize={PAGE_SIZE}
+        onPageChange={setPage}
+        onEdit={setEditing}
+        onDelete={setDeleting}
+        hasFilters={hasFilters}
+        emptyAction={
+          !hasFilters && (
+            <Button leftIcon={<Plus size={16} />} onClick={() => setCreating(true)}>
+              Add transaction
+            </Button>
+          )
+        }
+      />
+
+      <TransactionModal open={creating} onClose={() => setCreating(false)} defaultCurrency={currency} />
+      <TransactionModal open={!!editing} onClose={() => setEditing(null)} transaction={editing} defaultCurrency={currency} />
+      <ConfirmDialog
+        open={!!deleting}
+        tone="danger"
+        title="Delete this transaction?"
+        description={deleting ? `${deleting.merchant_name ?? "This entry"} for ${formatCurrency(deleting.amount, deleting.currency || currency)} will be removed permanently.` : undefined}
+        confirmLabel="Delete"
+        loading={remove.isPending}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleting(null)}
+      />
+    </div>
   );
-};
+}

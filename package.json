@@ -1,26 +1,30 @@
 {
   "name": "ziganya",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "db:types": "npx supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/lib/database.types.ts",
+    "preview": "vite preview",
+    "typecheck": "tsc -b",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:types": "npx supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > sdk/db/database.types.ts",
+    "dev:mock": "node scripts/mock/dev.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.94.0",
     "@tanstack/react-query": "^5.90.21",
-    "fast-xml-parser": "^5.3.4",
     "framer-motion": "^12.31.0",
+    "heic-to": "^1.5.2",
     "lucide-react": "^0.563.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router": "^7.13.0",
-    "react-router-dom": "^7.13.0",
-    "recharts": "^3.7.0"
+    "recharts": "^3.7.0",
+    "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
@@ -36,6 +40,7 @@
     "tailwindcss": "^4.1.18",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.54.0",
-    "vite": "^7.2.4"
+    "vite": "^7.2.4",
+    "vitest": "^5.0.0"
   }
 }

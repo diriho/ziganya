@@ -1,22 +1,21 @@
 import { dbClient, type BudgetInsert } from "@sdk/db";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 // Fetch budgets for a specific user
-export const useBudgets = (userId:string) =>{
-    return useQuery({
-        queryKey: ["budgets",userId],
+export const useBudgets = (userId: string) => {
+  return useQuery({
+    queryKey: ["budgets", userId],
     enabled: !!userId,
-        queryFn: async () => {
-            // now make db client call
-            const {data,error} = await dbClient
-                .from("budgets")
-                .select("*")
-                .eq("user_id",userId)
-                .order("created_at",{ascending:false});
-            if(error) throw error;
-            return data ?? [];
-        }
-    })
-}
+    queryFn: async () => {
+      const { data, error } = await dbClient
+        .from("budgets")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+};
 
 // Post request
 /**

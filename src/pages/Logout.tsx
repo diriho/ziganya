@@ -1,57 +1,59 @@
+import { useEffect, useRef, useState } from "react";
+import { CheckCircle2, Loader2 } from "lucide-react";
+import { signOut } from "@sdk/auth";
+import { LinkButton } from "@/components/ui";
+import { LogoMark } from "@/components/Logo";
 
+export function LogoutPage() {
+  const started = useRef(false);
+  const [state, setState] = useState<"working" | "done" | "error">("working");
+  const [message, setMessage] = useState<string | null>(null);
 
-import { useNavigate } from "react-router";
-import {signOutUser} from "@/utils/auth";
-
-
-export const LogoutPage = () => {
-   // handle user sign out logic
-  const handleSignOut = async () => {
-          await signOutUser();
-  };
-
-  // go back to the home page after signing out 
-  const navigate = useNavigate();
-
-  // set this as the onClick handler for loging out. Logout and then navigate back to the home page.
-  const handleGoHome = () => {
-      handleSignOut();
-      navigate("/");
-  };
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    signOut().then(({ error }) => {
+      if (error) {
+        setMessage(error);
+        setState("error");
+      } else {
+        setState("done");
+      }
+    });
+  }, []);
 
   return (
-    <section className="p-6">
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-md rounded-3xl bg-white p-6 text-center shadow-2xl">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-7 w-7"
-                aria-hidden="true"
-              >
-                <path d="M20 6 9 17l-5-5" />
-              </svg>
-            </div>
-            <h2 className="mt-4 text-2xl font-bold text-zinc-900">
-              You have been logged out successfully
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-zinc-600">
-              Press on the button below to go back to the home page.
-            </p>
-            <button
-              type="button"
-              onClick={handleGoHome}
-              className="mt-6 inline-flex rounded-xl bg-brand-green px-5 py-2.5 text-sm font-medium text-brand-green-light transition-colors hover:bg-black"
-            >
-              Go to home page
-            </button>
-          </div>
+    <main className="grid min-h-screen place-items-center bg-bg px-4">
+      <div className="card w-full max-w-md p-8 text-center">
+        <div className="flex justify-center">
+          <LogoMark size={44} />
         </div>
-    </section>
+        {state === "working" ? (
+          <>
+            <Loader2 className="mx-auto mt-6 animate-spin text-brand" size={28} aria-hidden />
+            <h1 className="mt-4 text-xl font-bold">Signing you out…</h1>
+          </>
+        ) : state === "done" ? (
+          <>
+            <span className="mx-auto mt-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-good-soft text-good">
+              <CheckCircle2 size={24} />
+            </span>
+            <h1 className="mt-4 text-xl font-bold">You're signed out</h1>
+            <p className="mt-1.5 text-sm text-muted">Thanks for using Ziganya. Come back anytime.</p>
+          </>
+        ) : (
+          <>
+            <h1 className="mt-6 text-xl font-bold">We couldn't sign you out</h1>
+            <p className="mt-1.5 text-sm text-danger">{message}</p>
+          </>
+        )}
+        <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+          <LinkButton to="/" variant="secondary">
+            Back to home
+          </LinkButton>
+          <LinkButton to="/?login=1">Sign in again</LinkButton>
+        </div>
+      </div>
+    </main>
   );
-};
+}

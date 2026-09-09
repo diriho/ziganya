@@ -1,37 +1,296 @@
 @import "tailwindcss";
 
-@theme {
-    --color-brand-green: #063b1e;
-    --color-brand-green-light: #6eff8a;
-    --color-brand-white: #fcfcfc;
-    --breakpoint-xs: 480px;
+/* Class-based dark mode, toggled on <html> by the theme provider. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ------------------------------------------------------------------ */
+/* Semantic design tokens                                               */
+/* ------------------------------------------------------------------ */
+:root {
+  color-scheme: light;
+
+  --c-bg: #f4f6f4;
+  --c-surface: #ffffff;
+  --c-surface-2: #f3f5f3;
+  --c-surface-3: #e9ede9;
+  --c-line: #e3e8e3;
+  --c-line-strong: #cbd3cc;
+
+  --c-ink: #0f1a13;
+  --c-ink-2: #3d4a41;
+  --c-muted: #76827a;
+
+  --c-brand: #063b1e;
+  --c-brand-2: #0b5a2e;
+  --c-brand-soft: #e4f4e9;
+  --c-accent: #6eff8a;
+  --c-accent-soft: #d9ffe0;
+
+  --c-primary: #063b1e;
+  --c-primary-hover: #0a4d28;
+  --c-primary-fg: #6eff8a;
+
+  --c-good: #15803d;
+  --c-good-soft: #dcfce7;
+  --c-warn: #b45309;
+  --c-warn-soft: #fef3c7;
+  --c-danger: #dc2626;
+  --c-danger-soft: #fee2e2;
+  --c-info: #2a78d6;
+  --c-info-soft: #dbeafe;
+
+  /* Chart series (validated for CVD + contrast on both surfaces) */
+  --c-series-1: #15803d;
+  --c-series-2: #2a78d6;
+  --c-grid: #e6eae6;
+  --c-axis: #c3cbc5;
+
+  --shadow-card: 0 1px 2px rgba(15, 26, 19, 0.04), 0 10px 30px -14px rgba(15, 26, 19, 0.14);
+  --shadow-pop: 0 12px 40px -12px rgba(15, 26, 19, 0.25), 0 2px 6px rgba(15, 26, 19, 0.06);
 }
 
-/* Hide scrollbar but keep functionality */
-.scrollbar-hide {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-    scroll-behavior: smooth;
+.dark {
+  color-scheme: dark;
+
+  --c-bg: #0b0f0c;
+  --c-surface: #131a15;
+  --c-surface-2: #1a231c;
+  --c-surface-3: #222d25;
+  --c-line: #232d26;
+  --c-line-strong: #33413a;
+
+  --c-ink: #f1f5f2;
+  --c-ink-2: #c4cec7;
+  --c-muted: #8b978e;
+
+  --c-brand: #8ef5a3;
+  --c-brand-2: #6eff8a;
+  --c-brand-soft: #14291c;
+  --c-accent: #6eff8a;
+  --c-accent-soft: #163a22;
+
+  --c-primary: #6eff8a;
+  --c-primary-hover: #8dffa3;
+  --c-primary-fg: #063b1e;
+
+  --c-good: #34c76a;
+  --c-good-soft: #10301b;
+  --c-warn: #f4b13d;
+  --c-warn-soft: #3a2a0d;
+  --c-danger: #f26d6d;
+  --c-danger-soft: #3b1717;
+  --c-info: #5aa0f0;
+  --c-info-soft: #14253d;
+
+  --c-series-1: #16a34a;
+  --c-series-2: #3987e5;
+  --c-grid: #202a23;
+  --c-axis: #33413a;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 30px -14px rgba(0, 0, 0, 0.6);
+  --shadow-pop: 0 16px 48px -12px rgba(0, 0, 0, 0.7), 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
-.scrollbar-hide::-webkit-scrollbar {
-    display: none;  /* Chrome, Safari and Opera */
+/* Expose tokens to Tailwind utilities: bg-surface, text-ink, border-line, ... */
+@theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-surface-3: var(--c-surface-3);
+  --color-line: var(--c-line);
+  --color-line-strong: var(--c-line-strong);
+
+  --color-ink: var(--c-ink);
+  --color-ink-2: var(--c-ink-2);
+  --color-muted: var(--c-muted);
+
+  --color-brand: var(--c-brand);
+  --color-brand-2: var(--c-brand-2);
+  --color-brand-soft: var(--c-brand-soft);
+  --color-accent: var(--c-accent);
+  --color-accent-soft: var(--c-accent-soft);
+
+  --color-primary: var(--c-primary);
+  --color-primary-hover: var(--c-primary-hover);
+  --color-primary-fg: var(--c-primary-fg);
+
+  --color-good: var(--c-good);
+  --color-good-soft: var(--c-good-soft);
+  --color-warn: var(--c-warn);
+  --color-warn-soft: var(--c-warn-soft);
+  --color-danger: var(--c-danger);
+  --color-danger-soft: var(--c-danger-soft);
+  --color-info: var(--c-info);
+  --color-info-soft: var(--c-info-soft);
+
+  --color-series-1: var(--c-series-1);
+  --color-series-2: var(--c-series-2);
+
+  --shadow-card: var(--shadow-card);
+  --shadow-pop: var(--shadow-pop);
+
+  --radius-card: 1.5rem;
+  --breakpoint-xs: 480px;
+
+  --animate-fade-up: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes shimmer {
+    from {
+      background-position: -200% 0;
+    }
+    to {
+      background-position: 200% 0;
+    }
+  }
 }
 
-@keyframes uimock-bounce-slow {
-	0% { transform: translateY(0); }
-	100% { transform: translateY(-10px); }
+/* ------------------------------------------------------------------ */
+/* Base                                                                 */
+/* ------------------------------------------------------------------ */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-bg text-ink font-sans antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display tracking-tight text-ink;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--c-accent) 55%, transparent);
+    color: var(--c-ink);
+  }
+  :focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--c-accent) 80%, var(--c-brand));
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  button,
+  [role="button"] {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+  }
+  input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+  }
 }
 
-@keyframes uimock-pulse {
-    0% { transform: scale(1); opacity: 0.8; }
-    100% { transform: scale(1.1); opacity: 1; }
+/* ------------------------------------------------------------------ */
+/* Components                                                           */
+/* ------------------------------------------------------------------ */
+@layer components {
+  .card {
+    @apply rounded-card border border-line bg-surface shadow-card;
+  }
+  .card-inset {
+    @apply rounded-2xl border border-line bg-surface-2;
+  }
+  .field {
+    @apply w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink shadow-none transition-[border-color,box-shadow] duration-150 placeholder:text-muted;
+  }
+  .field:hover {
+    border-color: var(--c-line-strong);
+  }
+  .field:focus {
+    outline: none;
+    border-color: var(--c-brand);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--c-accent) 45%, transparent);
+  }
+  .field:disabled {
+    @apply opacity-60;
+  }
+  select.field {
+    @apply appearance-none bg-no-repeat pr-10;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2376827a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+    background-position: right 0.75rem center;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted;
+  }
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-muted;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  .skeleton {
+    @apply rounded-lg bg-surface-3;
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in oklab, var(--c-surface) 70%, transparent) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: var(--animate-shimmer);
+  }
+  .divider {
+    @apply h-px w-full bg-line;
+  }
 }
 
-.uimock-animate-bounce-slow {
-    animation: uimock-bounce-slow 2.5s infinite alternate;
+/* ------------------------------------------------------------------ */
+/* Utilities                                                            */
+/* ------------------------------------------------------------------ */
+@utility scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-.uimock-animate-pulse {
-    animation: uimock-pulse 2s infinite alternate;
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-line-strong) transparent;
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--c-line-strong);
+    border-radius: 999px;
+  }
+}
+
+@utility text-balance {
+  text-wrap: balance;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

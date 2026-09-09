@@ -2,9 +2,39 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ziganya</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Ziganya — Finance tracking that doesn't feel like work</title>
+    <meta
+      name="description"
+      content="Ziganya captures your spending from receipts, bank screenshots, and messages. Track transactions, subscriptions, and budgets in one calm dashboard."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f7f5" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0f0c" />
+    <meta property="og:title" content="Ziganya" />
+    <meta property="og:description" content="Finance tracking that doesn't feel like work." />
+    <meta property="og:type" content="website" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+    />
+    <script>
+      // Apply the saved theme before first paint to avoid a light/dark flash.
+      (function () {
+        try {
+          var t = localStorage.getItem("ziganya:theme");
+          var dark =
+            t === "dark" ||
+            ((t === null || t === "system") &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.classList.toggle("dark", dark);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

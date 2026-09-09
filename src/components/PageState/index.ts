@@ -1,2 +1,2 @@
-export { PageLoading } from "./PageLoading";
-export { PageError } from "./PageError";
+export * from "./PageLoading";
+export * from "./PageError";

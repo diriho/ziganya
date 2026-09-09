@@ -1,67 +1,141 @@
-import { motion } from "framer-motion";
-import { ChevronDown } from "lucide-react";
+import { useMemo, useState } from "react";
+import { BarChart3, Eye, EyeOff, Plus, Table2 } from "lucide-react";
+import type { Category, Transaction } from "@sdk/db";
+import { Button, Card, CardHeader, EmptyState, Segmented, cn } from "@/components/ui";
+import { ChartTable, SpendingChart } from "@/components/charts";
+import { bucketTransactions, categoryBreakdown, filterByRange, percentChange, totalsOf, type Bucket } from "@/lib/analytics";
+import type { AnalyticsRange } from "@/lib/dates";
+import { formatCurrency, formatPercent } from "@/lib/format";
 
-export const SpendingAnalytics = () => {
-    const chartData = [60, 45, 80, 55, 95, 70, 85];
-    const weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+export interface SpendingAnalyticsProps {
+  transactions: Transaction[];
+  categories: Category[];
+  range: AnalyticsRange;
+  currency: string;
+  onAddTransaction?: () => void;
+}
 
-    return (
-        <div className="bg-white p-3 sm:p-4 md:p-6 lg:p-8 rounded-[2rem] border border-zinc-200 shadow-sm">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4 sm:mb-6 md:mb-8">
-                <h3 className="text-lg sm:text-xl font-bold text-brand-green">Spending Analytics</h3>
-                <div className="relative">
-                    <select className="
-                        appearance-none bg-zinc-50 border border-zinc-100 
-                        rounded-lg px-3 py-1.5 pr-8 text-sm font-bold text-brand-green
-                        cursor-pointer hover:bg-zinc-100 transition-colors
-                        focus:outline-none focus:ring-2 focus:ring-brand-green focus:border-transparent
-                    ">
-                        <option>Last 7 Days</option>
-                        <option>Last 30 Days</option>
-                        <option>Last 3 Months</option>
-                    </select>
-                    <ChevronDown 
-                        size={16} 
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-brand-green pointer-events-none" 
-                    />
-                </div>
-            </div>
+type View = "chart" | "table";
 
-            {/* Chart */}
-            <div className="h-48 sm:h-56 md:h-64 flex items-end justify-between gap-2 sm:gap-4">
-                {chartData.map((height, index) => (
-                    <div 
-                        key={index} 
-                        className="flex-1 flex flex-col items-center gap-3 group"
-                    >
-                        {/* Bar container */}
-                        <div 
-                            className="w-full bg-zinc-100 rounded-2xl relative overflow-hidden transition-all group-hover:bg-brand-green-light/20" 
-                            style={{ height: '100%' }}
-                        >
-                            {/* Animated bar */}
-                            <motion.div 
-                                initial={{ height: 0 }}
-                                animate={{ height: `${height}%` }}
-                                transition={{ 
-                                    delay: index * 0.1, 
-                                    duration: 0.8,
-                                    ease: "easeOut"
-                                }}
-                                className={`absolute bottom-0 w-full rounded-2xl ${
-                                    height > 80 ? 'bg-brand-green' : 'bg-brand-green-light'
-                                }`}
-                            />
-                        </div>
-                        
-                        {/* Weekday label */}
-                        <span className="text-xs font-bold text-zinc-400 uppercase tracking-tighter">
-                            {weekdays[index]}
-                        </span>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-};
+export function SpendingAnalytics({ transactions, categories, range, currency, onAddTransaction }: SpendingAnalyticsProps) {
+  const [view, setView] = useState<View>("chart");
+  const [showIncome, setShowIncome] = useState(false);
+
+  const { buckets, totals, prevTotals, change, dailyAvg, topCategory } = useMemo(() => {
+    const current = filterByRange(transactions, range.from, range.to);
+    const previous = filterByRange(transactions, range.prevFrom, range.prevTo);
+    const totals = totalsOf(current);
+    const prevTotals = totalsOf(previous);
+    return {
+      buckets: bucketTransactions(current, range),
+      totals,
+      prevTotals,
+      change: percentChange(totals.expense, prevTotals.expense),
+      dailyAvg: totals.expense / range.days,
+      topCategory: categoryBreakdown(current, categories, 1)[0] ?? null,
+    };
+  }, [transactions, categories, range]);
+
+  const periodWord = range.preset === "7d" ? "week" : range.preset === "30d" ? "30 days" : "3 months";
+  const isEmpty = totals.count === 0;
+  const hasIncome = totals.income > 0;
+
+  return (
+    <Card padding="md" className="flex h-full flex-col">
+      <CardHeader
+        title="Spending analytics"
+        subtitle={`${range.bucket === "week" ? "Weekly" : "Daily"} spending${showIncome && hasIncome ? " with income for context" : ""}`}
+        action={
+          !isEmpty && (
+            <>
+              {hasIncome && view === "chart" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowIncome((v) => !v)}
+                  aria-pressed={showIncome}
+                  leftIcon={showIncome ? <EyeOff size={14} /> : <Eye size={14} />}
+                  className="text-xs"
+                >
+                  {showIncome ? "Hide income" : "Show income"}
+                </Button>
+              )}
+              <Segmented<View>
+              size="sm"
+              ariaLabel="Analytics view"
+              value={view}
+              onChange={setView}
+              options={[
+                { value: "chart", label: "Chart", icon: <BarChart3 size={14} /> },
+                { value: "table", label: "Table", icon: <Table2 size={14} /> },
+              ]}
+            />
+            </>
+          )
+        }
+      />
+
+      {isEmpty ? (
+        <EmptyState
+          icon={<BarChart3 size={22} />}
+          title={`No transactions in the last ${periodWord}`}
+          description="Add a transaction or upload a receipt and your spending will show up here."
+          action={
+            onAddTransaction && (
+              <Button onClick={onAddTransaction} leftIcon={<Plus size={16} />}>
+                Add transaction
+              </Button>
+            )
+          }
+        />
+      ) : (
+        <>
+          <dl className="mb-5 grid grid-cols-2 gap-x-6 gap-y-4 lg:grid-cols-4">
+            <Stat label="Total spent" value={formatCurrency(totals.expense, currency)} />
+            <Stat label="Daily average" value={formatCurrency(dailyAvg, currency)} />
+            <Stat
+              label={`vs prior ${periodWord}`}
+              value={change === null ? "—" : formatPercent(change, change !== 0 && Math.abs(change) < 10 ? 1 : 0)}
+              valueClass={change === null ? "text-muted" : change > 0 ? "text-danger" : change < 0 ? "text-good" : undefined}
+              sub={change === null ? "No prior data" : `${formatCurrency(prevTotals.expense, currency)} before`}
+            />
+            <Stat
+              label="Top category"
+              value={topCategory ? topCategory.name : "—"}
+              sub={topCategory ? `${formatCurrency(topCategory.amount, currency)} · ${Math.round(topCategory.share * 100)}%` : undefined}
+              truncate
+            />
+          </dl>
+
+          {view === "chart" ? (
+            <SpendingChart data={buckets} currency={currency} height={272} showIncome={showIncome} />
+          ) : (
+            <ChartTable<Bucket>
+              caption="Spending and income by period"
+              rows={buckets}
+              rowKey={(b) => b.key}
+              columns={[
+                { key: "period", label: "Period", render: (b) => b.longLabel },
+                { key: "expense", label: "Spending", align: "right", render: (b) => formatCurrency(b.expense, currency) },
+                { key: "income", label: "Income", align: "right", render: (b) => formatCurrency(b.income, currency) },
+                { key: "count", label: "Transactions", align: "right", render: (b) => b.count },
+              ]}
+            />
+          )}
+        </>
+      )}
+    </Card>
+  );
+}
+
+function Stat({ label, value, sub, valueClass, truncate }: { label: string; value: string; sub?: string; valueClass?: string; truncate?: boolean }) {
+  return (
+    <div className="min-w-0">
+      <dt className="eyebrow">{label}</dt>
+      <dd className={cn("mt-1 font-display text-lg font-bold leading-tight sm:text-xl", valueClass, truncate && "truncate")} title={truncate ? value : undefined}>
+        {value}
+      </dd>
+      {sub && <dd className="mt-0.5 truncate text-xs text-muted">{sub}</dd>}
+    </div>
+  );
+}

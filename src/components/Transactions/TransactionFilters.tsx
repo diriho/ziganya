@@ -1,61 +1,81 @@
-import { Search } from "lucide-react";
-import type { TypeFilter } from "./types";
-
-const options: { label: string; value: TypeFilter }[] = [
-  { label: "All", value: "all" },
-  { label: "Income", value: "income" },
-  { label: "Expenses", value: "expense" },
-];
+import { Search, X } from "lucide-react";
+import type { Category } from "@sdk/db";
+import { Segmented, Select, cn } from "@/components/ui";
+import { DATE_PRESET_LABELS, type DatePreset, type TypeFilter } from "./types";
 
 export interface TransactionFiltersProps {
   typeFilter: TypeFilter;
-  onFilterChange: (value: TypeFilter) => void;
-  searchQuery?: string;
-  onSearchChange?: (value: string) => void;
+  onTypeChange: (value: TypeFilter) => void;
+  datePreset: DatePreset;
+  onDateChange: (value: DatePreset) => void;
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
+  categoryId: string;
+  onCategoryChange: (value: string) => void;
+  categories: Category[];
+  className?: string;
 }
 
-export const TransactionFilters = ({
+export function TransactionFilters({
   typeFilter,
-  onFilterChange,
-  searchQuery = "",
+  onTypeChange,
+  datePreset,
+  onDateChange,
+  searchQuery,
   onSearchChange,
-}: TransactionFiltersProps) => (
-  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-    <div className="flex gap-2">
-      {options.map(({ label, value }) => {
-        const isActive = typeFilter === value;
-        return (
-          <button
-            key={value}
-            type="button"
-            onClick={() => onFilterChange(value)}
-            className={`rounded-xl px-4 py-2.5 text-sm font-medium transition-all ${
-              isActive
-                ? "bg-brand-green text-white shadow-sm"
-                : "bg-white text-zinc-600 ring-1 ring-zinc-200 hover:bg-zinc-50 hover:ring-zinc-300"
-            }`}
-            aria-pressed={isActive}
-          >
-            {label}
-          </button>
-        );
-      })}
-    </div>
-    {onSearchChange && (
-      <div className="relative w-full sm:w-72">
-        <Search
-          size={18}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none"
+  categoryId,
+  onCategoryChange,
+  categories,
+  className,
+}: TransactionFiltersProps) {
+  return (
+    <div className={cn("flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between", className)}>
+      <div className="flex flex-wrap items-center gap-2">
+        <Segmented<DatePreset>
+          ariaLabel="Date range"
+          value={datePreset}
+          onChange={onDateChange}
+          options={(Object.keys(DATE_PRESET_LABELS) as DatePreset[]).map((v) => ({ value: v, label: DATE_PRESET_LABELS[v] }))}
         />
-        <input
-          type="search"
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search by merchant..."
-          className="w-full rounded-xl border border-zinc-200 bg-white py-2.5 pl-10 pr-4 text-sm text-zinc-900 placeholder-zinc-400 focus:border-brand-green focus:outline-none focus:ring-2 focus:ring-brand-green/20"
-          aria-label="Search transactions by merchant"
+        <Segmented<TypeFilter>
+          ariaLabel="Transaction type"
+          value={typeFilter}
+          onChange={onTypeChange}
+          options={[
+            { value: "all", label: "All" },
+            { value: "income", label: "Income" },
+            { value: "expense", label: "Expenses" },
+          ]}
         />
       </div>
-    )}
-  </div>
-);
+
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <Select value={categoryId} onChange={(e) => onCategoryChange(e.target.value)} aria-label="Category" className="h-10 sm:w-44">
+          <option value="">All categories</option>
+          <option value="__none">Uncategorized</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </Select>
+        <div className="relative sm:w-64">
+          <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" aria-hidden />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Search merchant, note, amount…"
+            aria-label="Search transactions"
+            className="field h-10 pl-10 pr-9"
+          />
+          {searchQuery && (
+            <button type="button" onClick={() => onSearchChange("")} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted hover:bg-surface-2 hover:text-ink" aria-label="Clear search">
+              <X size={14} />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

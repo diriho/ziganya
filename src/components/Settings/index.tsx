@@ -1,28 +1,26 @@
-import ThemeMode from "./children/themeMode";
-import Profile from "./children/profile";
-import DeleteAccount from "./children/deleteAcc";
+import { PageHeader } from "@/components/ui";
+import { ProfileSection } from "./sections/ProfileSection";
+import { FinancesSection } from "./sections/FinancesSection";
+import { AppearanceSection } from "./sections/AppearanceSection";
+import { ReceiptsSection } from "./sections/ReceiptsSection";
+import { DataSection } from "./sections/DataSection";
+import { DangerSection } from "./sections/DangerSection";
 
-export default function SettingsPage() {
+export function SettingsView() {
   return (
-    <section className="space-y-8" aria-labelledby="settings-title">
-      <header>
-        <h1
-          id="settings-title"
-          className="text-2xl font-bold tracking-tight text-zinc-900"
-        >
-          Settings
-        </h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Manage your account preferences and application settings.
-        </p>
-      </header>
-
-
-      <div className="space-y-8">
-        <Profile />
-        <ThemeMode />
-        <DeleteAccount />
-      </div>
-    </section>
+    <div className="space-y-10">
+      <PageHeader eyebrow="Account" title="Settings" description="Your profile, headline figures, appearance, and data." />
+      <ProfileSection />
+      <div className="divider" />
+      <FinancesSection />
+      <div className="divider" />
+      <AppearanceSection />
+      <div className="divider" />
+      <ReceiptsSection />
+      <div className="divider" />
+      <DataSection />
+      <div className="divider" />
+      <DangerSection />
+    </div>
   );
 }

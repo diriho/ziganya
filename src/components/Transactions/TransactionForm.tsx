@@ -1,166 +1,243 @@
-import { useState } from "react";
-import { useCategories, useCreateTransaction, useCurrentUser } from "@sdk/requests";
-import type { TransactionInsert } from "@sdk/db";
+import { useState, type FormEvent } from "react";
+import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import type { Transaction } from "@sdk/db";
+import { useCategories, useCreateTransaction, useUpdateTransaction, type TransactionPayload } from "@sdk/requests";
+import { Button, FormField, Input, MoneyInput, Segmented, Select, Textarea, useToast } from "@/components/ui";
+import { toDateKey } from "@/lib/dates";
+import { CURRENCY_OPTIONS, SOURCE_OPTIONS } from "@/lib/sources";
 
-interface TransactionFormProps {
-  onSuccess: () => void;
+export type TxType = "expense" | "income";
+
+/** Values to pre-populate a new transaction with (e.g. from a scanned receipt). */
+export interface TransactionPrefill {
+  type?: TxType;
+  amount?: number | null;
+  merchant_name?: string | null;
+  transaction_date?: string | null;
+  source?: string;
+  currency?: string | null;
+  category_id?: string | null;
+  description?: string | null;
+  /** Extraction confidence 0..1, stored on the row. */
+  confidence?: number | null;
+}
+
+export type AttentionField = "amount" | "merchant_name" | "transaction_date" | "currency" | "category_id";
+
+export interface TransactionFormProps {
+  userId: string;
+  /** When provided the form edits this transaction instead of creating one. */
+  initial?: Transaction | null;
+  /** Starting values for a new transaction. Ignored when `initial` is set. */
+  prefill?: TransactionPrefill | null;
+  /** Fields the user should double-check (highlighted with a warning). */
+  attention?: AttentionField[];
+  defaultCurrency?: string;
+  submitLabel?: string;
+  onSuccess: (transaction: Transaction) => void;
   onCancel: () => void;
 }
 
-export const TransactionForm = ({ onSuccess, onCancel }: TransactionFormProps) => {
-  const { user, isLoading: userLoading } = useCurrentUser();
-  const [formData, setFormData] = useState<Omit<TransactionInsert, "user_id">>({
-    amount: 0,
-    type: "expense",
-    merchant_name: "",
-    transaction_date: new Date().toISOString().split("T")[0],
-    source: "manual",
-    currency: "USD",
-    description: null,
-    category_id: null,
-    notes: null,
-  });
+interface FormState {
+  type: TxType;
+  amount: string;
+  merchant_name: string;
+  transaction_date: string;
+  source: string;
+  currency: string;
+  category_id: string;
+  description: string;
+}
 
-  const createTransaction = useCreateTransaction(user?.userID ?? "");
-  const { data: categories = [] } = useCategories(user?.userID ?? "");
-
-  if (userLoading || !user?.userID) {
-    return <div className="py-6 text-center text-zinc-500">Loading user info…</div>;
+function initialState(initial: Transaction | null | undefined, defaultCurrency: string, prefill?: TransactionPrefill | null): FormState {
+  if (initial) {
+    return {
+      type: (initial.type ?? "expense").toLowerCase() === "income" ? "income" : "expense",
+      amount: String(Math.abs(Number(initial.amount))),
+      merchant_name: initial.merchant_name ?? "",
+      transaction_date: initial.transaction_date?.slice(0, 10) ?? toDateKey(new Date()),
+      source: initial.source ?? "manual",
+      currency: initial.currency ?? defaultCurrency,
+      category_id: initial.category_id ?? "",
+      description: initial.description ?? "",
+    };
   }
+  return {
+    type: prefill?.type ?? "expense",
+    amount: prefill?.amount != null ? String(prefill.amount) : "",
+    merchant_name: prefill?.merchant_name ?? "",
+    transaction_date: prefill?.transaction_date ?? toDateKey(new Date()),
+    source: prefill?.source ?? "manual",
+    currency: prefill?.currency ?? defaultCurrency,
+    category_id: prefill?.category_id ?? "",
+    description: prefill?.description ?? "",
+  };
+}
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const attentionClass = "border-warn ring-2 ring-warn/30";
+const CHECK_HINT = "Double-check this value against the receipt.";
+
+export function TransactionForm({
+  userId,
+  initial,
+  prefill,
+  attention = [],
+  defaultCurrency = "USD",
+  submitLabel,
+  onSuccess,
+  onCancel,
+}: TransactionFormProps) {
+  const [form, setForm] = useState<FormState>(() => initialState(initial, defaultCurrency, prefill));
+  const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
+  const [touched, setTouched] = useState<Set<string>>(() => new Set());
+  const { data: categories = [] } = useCategories(userId);
+  const create = useCreateTransaction(userId);
+  const update = useUpdateTransaction(userId);
+  const toast = useToast();
+  const pending = create.isPending || update.isPending;
+  const isEdit = !!initial;
+
+  const set = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+    setForm((f) => ({ ...f, [key]: value }));
+    setTouched((t) => (t.has(key) ? t : new Set(t).add(key)));
+  };
+  const needsCheck = (key: AttentionField) => attention.includes(key) && !touched.has(key);
+
+  const validate = (): boolean => {
+    const next: typeof errors = {};
+    const amount = Number(form.amount);
+    if (!form.amount || !Number.isFinite(amount) || amount <= 0) next.amount = "Enter an amount greater than zero.";
+    if (!form.transaction_date) next.transaction_date = "Pick a date.";
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
+    const payload: TransactionPayload = {
+      type: form.type,
+      amount: Math.round(Number(form.amount) * 100) / 100,
+      merchant_name: form.merchant_name.trim() || null,
+      transaction_date: form.transaction_date,
+      source: form.source,
+      currency: form.currency,
+      category_id: form.category_id || null,
+      description: form.description.trim() || null,
+      ...(prefill && !isEdit ? { confidence: prefill.confidence ?? null, is_verified: true } : {}),
+    };
     try {
-      await createTransaction.mutateAsync(formData);
-      onSuccess();
-    } catch (error) {
-      console.error("Failed to create transaction:", error);
+      if (isEdit && initial) {
+        const row = await update.mutateAsync({ id: initial.id, ...payload });
+        toast.success("Transaction updated");
+        onSuccess(row);
+      } else {
+        const row = await create.mutateAsync(payload);
+        toast.success(prefill ? "Saved from receipt" : "Transaction added", `${payload.merchant_name ?? (form.type === "income" ? "Income" : "Expense")} recorded.`);
+        onSuccess(row);
+      }
+    } catch (err) {
+      toast.error(isEdit ? "Could not update transaction" : "Could not add transaction", err instanceof Error ? err.message : undefined);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-zinc-700 mb-1">
-          Type *
-        </label>
-        <select
-          value={formData.type}
-          onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-          className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-green"
-          required
-        >
-          <option value="expense">Expense</option>
-          <option value="income">Income</option>
-        </select>
+    <form onSubmit={submit} className="space-y-4" noValidate>
+      <Segmented<TxType>
+        ariaLabel="Transaction type"
+        value={form.type}
+        onChange={(v) => set("type", v)}
+        className="w-full [&>button]:flex-1"
+        options={[
+          { value: "expense", label: "Expense", icon: <ArrowUpRight size={14} /> },
+          { value: "income", label: "Income", icon: <ArrowDownLeft size={14} /> },
+        ]}
+      />
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[1fr_120px]">
+        <FormField label="Amount" htmlFor="tx-amount" error={errors.amount} hint={needsCheck("amount") ? CHECK_HINT : undefined} required>
+          <MoneyInput
+            id="tx-amount"
+            currency={form.currency}
+            value={form.amount}
+            onChange={(e) => set("amount", e.target.value)}
+            placeholder="0.00"
+            autoFocus={!prefill}
+            invalid={!!errors.amount}
+            className={needsCheck("amount") ? attentionClass : undefined}
+          />
+        </FormField>
+        <FormField label="Currency" htmlFor="tx-currency" hint={needsCheck("currency") ? "Check" : undefined}>
+          <Select id="tx-currency" value={form.currency} onChange={(e) => set("currency", e.target.value)} className={needsCheck("currency") ? attentionClass : undefined}>
+            {Array.from(new Set([form.currency, ...CURRENCY_OPTIONS])).map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </Select>
+        </FormField>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-zinc-700 mb-1">
-          Amount *
-        </label>
-        <input
-          type="number"
-          step="0.01"
-          value={formData.amount || ""}
-          onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
-          className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-green"
-          required
-          min="0"
+      <FormField label={form.type === "income" ? "Payer" : "Merchant"} htmlFor="tx-merchant" hint={needsCheck("merchant_name") ? CHECK_HINT : undefined}>
+        <Input
+          id="tx-merchant"
+          value={form.merchant_name}
+          onChange={(e) => set("merchant_name", e.target.value)}
+          placeholder={form.type === "income" ? "e.g. Employer, Client" : "e.g. Whole Foods, Netflix"}
+          className={needsCheck("merchant_name") ? attentionClass : undefined}
         />
+      </FormField>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <FormField label="Date" htmlFor="tx-date" error={errors.transaction_date} hint={needsCheck("transaction_date") ? CHECK_HINT : undefined} required>
+          <Input
+            id="tx-date"
+            type="date"
+            value={form.transaction_date}
+            onChange={(e) => set("transaction_date", e.target.value)}
+            max={toDateKey(new Date())}
+            invalid={!!errors.transaction_date}
+            className={needsCheck("transaction_date") ? attentionClass : undefined}
+          />
+        </FormField>
+        <FormField label="Source" htmlFor="tx-source">
+          <Select id="tx-source" value={form.source} onChange={(e) => set("source", e.target.value)}>
+            {SOURCE_OPTIONS.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </Select>
+        </FormField>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-zinc-700 mb-1">
-          Merchant Name
-        </label>
-        <input
-          type="text"
-          value={formData.merchant_name || ""}
-          onChange={(e) => setFormData({ ...formData, merchant_name: e.target.value || null })}
-          className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-green"
-          placeholder="e.g., Amazon, Salary"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-zinc-700 mb-1">
-          Date *
-        </label>
-        <input
-          type="date"
-          value={formData.transaction_date}
-          onChange={(e) => setFormData({ ...formData, transaction_date: e.target.value })}
-          className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-green"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-zinc-700 mb-1">
-          Source *
-        </label>
-        <select
-          value={formData.source}
-          onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-          className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-green"
-          required
-        >
-          <option value="manual">Manual</option>
-          <option value="bank_transfer">Bank Transfer</option>
-          <option value="credit_card">Credit Card</option>
-          <option value="cash">Cash</option>
-          <option value="other">Other</option>
-        </select>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-zinc-700 mb-1">
-          Category
-        </label>
-        <select
-          value={formData.category_id || ""}
-          onChange={(e) => setFormData({ ...formData, category_id: e.target.value || null })}
-          className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-green"
-        >
-          <option value="">None</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.name}
+      <FormField
+        label="Category"
+        htmlFor="tx-category"
+        hint={needsCheck("category_id") ? "Pick the best match." : categories.length === 0 ? "No categories yet — transactions will show as uncategorized." : undefined}
+      >
+        <Select id="tx-category" value={form.category_id} onChange={(e) => set("category_id", e.target.value)} className={needsCheck("category_id") ? attentionClass : undefined}>
+          <option value="">Uncategorized</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
             </option>
           ))}
-        </select>
-      </div>
+        </Select>
+      </FormField>
 
-      <div>
-        <label className="block text-sm font-medium text-zinc-700 mb-1">
-          Description
-        </label>
-        <textarea
-          value={formData.description || ""}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value || null })}
-          className="w-full px-3 py-2 border border-zinc-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-green"
-          rows={3}
-          placeholder="Optional notes"
-        />
-      </div>
+      <FormField label="Note" htmlFor="tx-description">
+        <Textarea id="tx-description" value={form.description} onChange={(e) => set("description", e.target.value)} placeholder="Optional details" rows={2} />
+      </FormField>
 
-      <div className="flex gap-3 pt-4">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 px-4 py-2 border border-zinc-300 rounded-lg text-zinc-700 hover:bg-zinc-50 transition-colors"
-        >
+      <div className="flex gap-3 pt-2">
+        <Button type="button" variant="secondary" onClick={onCancel} className="flex-1" disabled={pending}>
           Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={createTransaction.isPending}
-          className="flex-1 px-4 py-2 bg-brand-green text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-        >
-          {createTransaction.isPending ? "Adding..." : "Add Transaction"}
-        </button>
+        </Button>
+        <Button type="submit" className="flex-1" loading={pending}>
+          {submitLabel ?? (isEdit ? "Save changes" : form.type === "income" ? "Add income" : "Add expense")}
+        </Button>
       </div>
     </form>
   );
-};
+}

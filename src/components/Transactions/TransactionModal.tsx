@@ -1,155 +1,158 @@
-import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
-import { PiggyBank, Plus, Target, X } from "lucide-react";
-import { useCurrentUser, useUser, useUserUpdate } from "@sdk/requests";
-import { TransactionForm } from "./TransactionForm";
+import { useState, type FormEvent } from "react";
+import { PencilLine, PiggyBank, ScanLine, Target } from "lucide-react";
+import type { Transaction } from "@sdk/db";
+import { useAuth } from "@sdk/auth";
+import { useUser, useUserUpdate } from "@sdk/requests";
+import { Button, FormField, Modal, MoneyInput, Segmented, useToast } from "@/components/ui";
 import { formatCurrency } from "@/lib/format";
+import { TransactionForm, type TransactionPrefill } from "./TransactionForm";
+import { ReceiptScanner } from "./ReceiptScanner";
 
-interface TransactionModalProps {
-  isOpen: boolean;
+export type QuickAddMode = "transaction" | "scan" | "goal";
+
+export interface TransactionModalProps {
+  open: boolean;
   onClose: () => void;
+  /** Edit this transaction instead of creating a new one (hides the other tabs). */
+  transaction?: Transaction | null;
+  /** Show the "Savings goal" tab (dashboard quick-add). */
+  allowGoal?: boolean;
+  /** Which tab to open on. */
+  initialMode?: QuickAddMode;
+  /** Start scanning this file right away (opens in scan mode). */
+  initialFile?: File | null;
+  defaultCurrency?: string;
 }
 
-export const TransactionModal = ({ isOpen, onClose }: TransactionModalProps) => {
-  const [mode, setMode] = useState<"transaction" | "goal">("transaction");
-  const [goalPeriod, setGoalPeriod] = useState<"monthly" | "annual">("monthly");
-  const [goalAmount, setGoalAmount] = useState(0);
-  const { user, isLoading: userLoading } = useCurrentUser();
-  const { data: userRow, isLoading: userRowLoading } = useUser(user?.userID ?? "");
-  const updateUser = useUserUpdate(user?.userID ?? "");
+export function TransactionModal({ open, onClose, transaction = null, allowGoal = false, initialMode, initialFile = null, defaultCurrency }: TransactionModalProps) {
+  const isEdit = !!transaction;
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={isEdit ? "Edit transaction" : allowGoal ? "Quick add" : "Add transaction"}
+      description={isEdit ? "Update the details below." : "Scan a receipt or type it in. Nothing is saved until you confirm."}
+    >
+      {/* Remounts each time the modal opens so every inner state resets. */}
+      {open && (
+        <ModalBody
+          key={transaction?.id ?? "new"}
+          transaction={transaction}
+          allowGoal={allowGoal && !isEdit}
+          initialMode={initialFile ? "scan" : initialMode}
+          initialFile={initialFile}
+          onClose={onClose}
+          defaultCurrency={defaultCurrency}
+        />
+      )}
+    </Modal>
+  );
+}
 
-  useEffect(() => {
-    if (!isOpen) {
-      setMode("transaction");
-      return;
-    }
+function ModalBody({
+  transaction,
+  allowGoal,
+  initialMode,
+  initialFile,
+  onClose,
+  defaultCurrency,
+}: {
+  transaction: Transaction | null;
+  allowGoal: boolean;
+  initialMode?: QuickAddMode;
+  initialFile: File | null;
+  onClose: () => void;
+  defaultCurrency?: string;
+}) {
+  const { user } = useAuth();
+  const userId = user?.userID ?? "";
+  const [mode, setMode] = useState<QuickAddMode>(initialMode ?? "scan");
+  const [manualPrefill, setManualPrefill] = useState<TransactionPrefill | null>(null);
 
-    setGoalAmount(Number(userRow?.savings_goal ?? 0));
-  }, [isOpen, userRow?.savings_goal]);
+  if (transaction) {
+    return <TransactionForm userId={userId} initial={transaction} defaultCurrency={defaultCurrency} onSuccess={onClose} onCancel={onClose} />;
+  }
 
-  if (!isOpen) return null;
-
-  const handleSaveGoal = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!user?.userID) {
-      return;
-    }
-
-    await updateUser.mutateAsync({
-      total_balance: Number(userRow?.total_balance ?? 0),
-      savings_goal: goalAmount,
-    });
-
-    onClose();
+  const switchToManual = (prefill?: TransactionPrefill) => {
+    setManualPrefill(prefill ?? null);
+    setMode("transaction");
   };
 
-  return createPortal(
-    <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-1000"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-2xl shadow-xl w-[90%] max-w-125 max-h-[90vh] overflow-y-auto relative p-6"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-zinc-500 hover:text-zinc-700 hover:bg-zinc-100 rounded-lg transition-colors"
-          aria-label="Close"
-        >
-          <X size={20} />
-        </button>
-        <div className="mb-6 space-y-4">
-          <div>
-            <h2 className="text-2xl font-bold text-brand-green">Add Transaction</h2>
-            <p className="mt-1 text-sm text-zinc-500">Add a transaction or save a monthly or annual goal to your profile.</p>
-          </div>
-          <div className="flex rounded-xl border border-zinc-200 bg-zinc-50 p-1">
-            <button
-              type="button"
-              onClick={() => setMode("transaction")}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                mode === "transaction" ? "bg-white text-brand-green shadow-sm" : "text-zinc-500"
-              }`}
-            >
-              <Plus size={16} />
-              Transaction
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("goal")}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                mode === "goal" ? "bg-white text-brand-green shadow-sm" : "text-zinc-500"
-              }`}
-            >
-              <Target size={16} />
-              Set Saving Goal
-            </button>
-          </div>
-        </div>
-
-        {mode === "transaction" ? (
-          <TransactionForm onSuccess={onClose} onCancel={onClose} />
-        ) : (
-          <form onSubmit={handleSaveGoal} className="space-y-4">
-            <div className="rounded-2xl border border-zinc-100 bg-zinc-50 p-4">
-              <div className="flex items-center gap-2 text-sm font-medium text-brand-green">
-                <PiggyBank size={16} />
-                Current goal: {formatCurrency(Number(userRow?.savings_goal ?? 0))}
-              </div>
-              <p className="mt-2 text-sm text-zinc-500">
-                Choose whether this is a monthly or annual goal, then save the amount to your profile.
-              </p>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700">Goal period</label>
-              <select
-                value={goalPeriod}
-                onChange={(e) => setGoalPeriod(e.target.value as "monthly" | "annual")}
-                className="w-full rounded-lg border border-zinc-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-green"
-              >
-                <option value="monthly">Monthly</option>
-                <option value="annual">Annual</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium text-zinc-700">
-                {goalPeriod === "monthly" ? "Monthly goal amount" : "Annual goal amount"}
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={goalAmount || ""}
-                onChange={(e) => setGoalAmount(Number(e.target.value) || 0)}
-                className="w-full rounded-lg border border-zinc-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-green"
-                placeholder="0.00"
-              />
-            </div>
-
-            <div className="flex gap-3 pt-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 rounded-lg border border-zinc-300 px-4 py-2 text-zinc-700 transition-colors hover:bg-zinc-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={updateUser.isPending || userLoading || userRowLoading}
-                className="flex-1 rounded-lg bg-brand-green px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-              >
-                {updateUser.isPending ? "Saving..." : "Save Goal"}
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
-    </div>,
-    document.body
+  return (
+    <div className="space-y-5">
+      <Segmented<QuickAddMode>
+        ariaLabel="Quick add mode"
+        value={mode}
+        onChange={setMode}
+        className="w-full [&>button]:flex-1"
+        options={[
+          { value: "scan", label: "Scan receipt", icon: <ScanLine size={14} /> },
+          { value: "transaction", label: "Manual", icon: <PencilLine size={14} /> },
+          ...(allowGoal ? [{ value: "goal" as const, label: "Savings goal", icon: <Target size={14} /> }] : []),
+        ]}
+      />
+      {mode === "scan" ? (
+        <ReceiptScanner userId={userId} initialFile={initialFile} defaultCurrency={defaultCurrency} onDone={onClose} onCancel={onClose} onSwitchToManual={switchToManual} />
+      ) : mode === "transaction" ? (
+        <TransactionForm key={manualPrefill ? "prefilled" : "blank"} userId={userId} prefill={manualPrefill} defaultCurrency={defaultCurrency} onSuccess={onClose} onCancel={onClose} />
+      ) : (
+        <GoalForm userId={userId} onDone={onClose} />
+      )}
+    </div>
   );
-};
+}
+
+function GoalForm({ userId, onDone }: { userId: string; onDone: () => void }) {
+  const { data: userRow, isLoading } = useUser(userId);
+  const update = useUserUpdate(userId);
+  const toast = useToast();
+  const [amount, setAmount] = useState<string>("");
+  const [balance, setBalance] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+
+  const currentGoal = Number(userRow?.savings_goal ?? 0);
+  const currentBalance = Number(userRow?.total_balance ?? 0);
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    const goal = amount === "" ? currentGoal : Number(amount);
+    const bal = balance === "" ? currentBalance : Number(balance);
+    if (!Number.isFinite(goal) || goal < 0 || !Number.isFinite(bal)) {
+      setError("Enter valid amounts.");
+      return;
+    }
+    try {
+      await update.mutateAsync({ savings_goal: goal, total_balance: bal });
+      toast.success("Goal saved", goal > 0 ? `Saving toward ${formatCurrency(goal)}.` : "Savings goal cleared.");
+      onDone();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save your goal.");
+    }
+  };
+
+  return (
+    <form onSubmit={submit} className="space-y-4">
+      <div className="flex items-start gap-3 rounded-2xl bg-brand-soft p-4 text-brand">
+        <PiggyBank size={20} className="mt-0.5 shrink-0" />
+        <div className="text-sm leading-5">
+          <p className="font-semibold">Current goal: {currentGoal > 0 ? formatCurrency(currentGoal) : "not set"}</p>
+          <p className="opacity-80">Progress is measured against your total balance ({formatCurrency(currentBalance)}).</p>
+        </div>
+      </div>
+      <FormField label="Savings goal" htmlFor="goal-amount" hint="Leave blank to keep the current value.">
+        <MoneyInput id="goal-amount" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={currentGoal ? String(currentGoal) : "5,000.00"} disabled={isLoading} />
+      </FormField>
+      <FormField label="Total balance" htmlFor="goal-balance" hint="Your current balance across accounts." error={error}>
+        <MoneyInput id="goal-balance" value={balance} onChange={(e) => setBalance(e.target.value)} placeholder={String(currentBalance)} disabled={isLoading} />
+      </FormField>
+      <div className="flex gap-3 pt-2">
+        <Button type="button" variant="secondary" onClick={onDone} className="flex-1" disabled={update.isPending}>
+          Cancel
+        </Button>
+        <Button type="submit" className="flex-1" loading={update.isPending} disabled={isLoading}>
+          Save goal
+        </Button>
+      </div>
+    </form>
+  );
+}

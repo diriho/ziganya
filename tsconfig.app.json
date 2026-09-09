@@ -28,12 +28,9 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@components/*":["./src/components/*"],
-      "@sdk/db": ["./sdk/db"],
-      "@sdk/db/*": ["./sdk/db/*"],
-      "@sdk/requests": ["./sdk/requests"],
-      "@sdk/requests/*": ["./sdk/requests/*"]
-
+      "@components/*": ["./src/components/*"],
+      "@sdk": ["./sdk"],
+      "@sdk/*": ["./sdk/*"]
     }
   },
   "include": ["src", "sdk"]

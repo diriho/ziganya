@@ -1,9 +1,11 @@
 import { dbClient, type SubscriptionInsert } from "@sdk/db";
+
+export type SubscriptionPayload = Omit<SubscriptionInsert, "user_id">;
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export const useSubscriptions = (userId: string, limit?: number) => {
   return useQuery({
-    queryKey: ["subscriptions", userId,limit],
+    queryKey: ["subscriptions", userId, "list", limit],
     enabled: !!userId,
     queryFn: async () => {
       const rowLimit = typeof limit === "number" ? limit : 100;
@@ -11,8 +13,8 @@ export const useSubscriptions = (userId: string, limit?: number) => {
         .from("subscriptions")
         .select("*")
         .eq("user_id", userId)
-        .limit(rowLimit )
-        .order("next_billing_date", { ascending: true, nullsFirst: false });
+        .order("next_billing_date", { ascending: true, nullsFirst: false })
+        .limit(rowLimit);
       if (error) throw error;
       return data ?? [];
     },
@@ -24,7 +26,8 @@ export const useSubscription = (
   subscriptionId: string | null
 ) => {
   return useQuery({
-    queryKey: ["subscriptions", userId, subscriptionId],
+    queryKey: ["subscriptions", userId, "one", subscriptionId],
+    enabled: !!userId && !!subscriptionId,
     queryFn: async () => {
       const { data, error } = await dbClient
         .from("subscriptions")
@@ -35,16 +38,13 @@ export const useSubscription = (
       if (error) throw error;
       return data;
     },
-    enabled: !!subscriptionId,
   });
 };
 
 export const useCreateSubscription = (userId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (
-      subscription: Omit<SubscriptionInsert, "user_id">
-    ) => {
+    mutationFn: async (subscription: SubscriptionPayload) => {
       const { data, error } = await dbClient
         .from("subscriptions")
         .insert({ ...subscription, user_id: userId })
@@ -62,9 +62,7 @@ export const useCreateSubscription = (userId: string) => {
 export const useUpdateSubscription = (userId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (
-      subscription: Partial<SubscriptionInsert> & { id: string }
-    ) => {
+    mutationFn: async (subscription: Partial<SubscriptionPayload> & { id: string }) => {
       const { id, ...rest } = subscription;
       const { data, error } = await dbClient
         .from("subscriptions")

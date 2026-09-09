@@ -1,28 +1,19 @@
 import type { Subscription } from "@sdk/db";
+import { isActiveSubscription } from "@/lib/analytics";
+import { dateKeyOf, toDateKey } from "@/lib/dates";
 
-const todayISO = () => new Date().toISOString().slice(0, 10);
+/** Split into active (sorted by next renewal, overdue first) and inactive (paused/cancelled). */
+export function groupSubscriptions(subscriptions: Subscription[]) {
+  const active: Subscription[] = [];
+  const inactive: Subscription[] = [];
+  for (const sub of subscriptions) (isActiveSubscription(sub) ? active : inactive).push(sub);
+  const byDate = (a: Subscription, b: Subscription) => (dateKeyOf(a.next_billing_date) ?? "9999").localeCompare(dateKeyOf(b.next_billing_date) ?? "9999");
+  active.sort(byDate);
+  inactive.sort((a, b) => a.name.localeCompare(b.name));
+  return { active, inactive };
+}
 
-export function groupSubscriptionsByBilling(subscriptions: Subscription[]) {
-  const now = todayISO();
-  const upcoming: Subscription[] = [];
-  const past: Subscription[] = [];
-
-  const sorted = [...subscriptions].sort(
-    (a, b) => (a.next_billing_date ?? "").localeCompare(b.next_billing_date ?? "")
-  );
-
-  sorted.forEach((sub) => {
-    const date = sub.next_billing_date ?? "";
-    if (date >= now) upcoming.push(sub);
-    else past.push(sub);
-  });
-
-  upcoming.sort((a, b) =>
-    (a.next_billing_date ?? "").localeCompare(b.next_billing_date ?? "")
-  );
-  past.sort((a, b) =>
-    (b.next_billing_date ?? "").localeCompare(a.next_billing_date ?? "")
-  );
-
-  return { upcoming, past };
+export function isOverdue(sub: Subscription, today = new Date()): boolean {
+  const key = dateKeyOf(sub.next_billing_date);
+  return !!key && key < toDateKey(today) && isActiveSubscription(sub);
 }

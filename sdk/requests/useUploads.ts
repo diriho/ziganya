@@ -1,16 +1,18 @@
 import { dbClient, type UploadInsert } from "@sdk/db";
+import { uploadReceipt } from "../storage";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-export const useUploads = (userId: string) => {
+export const useUploads = (userId: string, limit = 50) => {
   return useQuery({
-    queryKey: ["uploads", userId],
+    queryKey: ["uploads", userId, limit],
     enabled: !!userId,
     queryFn: async () => {
       const { data, error } = await dbClient
         .from("uploads")
         .select("*")
         .eq("user_id", userId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(limit);
       if (error) throw error;
       return data ?? [];
     },
@@ -19,19 +21,29 @@ export const useUploads = (userId: string) => {
 
 export const useUpload = (userId: string, uploadId: string | null) => {
   return useQuery({
-    queryKey: ["uploads", userId, uploadId],
+    queryKey: ["uploads", userId, "one", uploadId],
+    enabled: !!userId && !!uploadId,
     queryFn: async () => {
-      if (!uploadId) return null;
       const { data, error } = await dbClient
         .from("uploads")
         .select("*")
         .eq("user_id", userId)
-        .eq("id", uploadId)
+        .eq("id", uploadId!)
         .single();
       if (error) throw error;
       return data;
     },
-    enabled: !!uploadId,
+  });
+};
+
+/** Upload a receipt file to storage and record it in `uploads`. */
+export const useUploadReceipt = (userId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => uploadReceipt(userId, file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["uploads", userId] });
+    },
   });
 };
 

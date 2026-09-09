@@ -1,12 +1,22 @@
-interface PageErrorProps {
-  message: string;
-}
+import { AlertTriangle, RefreshCw } from "lucide-react";
+import { Button, Card, EmptyState } from "@/components/ui";
 
-export const PageError = ({ message }: PageErrorProps) => (
-  <div
-    className="flex min-h-[40vh] items-center justify-center text-red-600"
-    role="alert"
-  >
-    {message}
-  </div>
-);
+export function PageError({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  return (
+    <Card padding="none">
+      <EmptyState
+        tone="danger"
+        icon={<AlertTriangle size={22} />}
+        title="Something went wrong"
+        description={message}
+        action={
+          onRetry && (
+            <Button variant="secondary" onClick={onRetry} leftIcon={<RefreshCw size={16} />}>
+              Try again
+            </Button>
+          )
+        }
+      />
+    </Card>
+  );
+}

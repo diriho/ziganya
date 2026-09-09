@@ -1,5 +1,5 @@
-import SettingsView from "@components/Settings";
+import { SettingsView } from "@/components/Settings";
 
-export const SettingsPage = () => {
+export function SettingsPage() {
   return <SettingsView />;
-};
+}

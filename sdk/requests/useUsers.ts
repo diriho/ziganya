@@ -1,131 +1,41 @@
-import { useEffect, useState } from "react";
 import { dbClient, type UserUpdate } from "@sdk/db";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-export interface CurrentUserProfile {
-  username: string;
-  email: string;
-  fullName: string;
-  userID: string;
-  lastSignedIn: string;
-  createdAt: string;
-}
+// The session-backed hooks live in the auth module; re-exported here for compatibility.
+export { useCurrentUser, useAuth, type CurrentUserProfile } from "../auth";
 
-const buildCurrentUserProfile = (
-  session: Awaited<ReturnType<typeof dbClient.auth.getSession>>["data"]["session"]
-): CurrentUserProfile | null => {
-  if (!session?.user) {
-    return null;
-  }
-
-  return {
-    username:
-      session.user.user_metadata?.full_name?.split(" ")?.[0] ??
-      session.user.user_metadata?.username ??
-      session.user.email?.split("@")[0] ??
-      "User",
-    fullName: session.user.user_metadata?.full_name ?? "",
-    email: session.user.email ?? "",
-    userID: session.user.id ?? "",
-    lastSignedIn: session.user.last_sign_in_at ?? "",
-    createdAt: session.user.created_at ?? "",
-  };
-};
-
-export const useCurrentUser = () => {
-  const [user, setUser] = useState<CurrentUserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const syncUser = async () => {
-      const {
-        data: { session },
-      } = await dbClient.auth.getSession();
-
-      if (!isMounted) {
-        return;
-      }
-
-      setUser(buildCurrentUserProfile(session));
-      setIsLoading(false);
-    };
-
-    void syncUser();
-
-    const {
-      data: { subscription },
-    } = dbClient.auth.onAuthStateChange((_event, session) => {
-      setUser(buildCurrentUserProfile(session));
-      setIsLoading(false);
-    });
-
-    return () => {
-      isMounted = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  return { user, isLoading };
-};
-
-
+/** The application `users` row (balance, savings goal, display name). */
 export const useUser = (userId: string) => {
   return useQuery({
     queryKey: ["user", userId],
+    enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await dbClient
-        .from("users")
-        .select("*")
-        .eq("user_id", userId)
-        .maybeSingle();
+      const { data, error } = await dbClient.from("users").select("*").eq("user_id", userId).maybeSingle();
       if (error) throw error;
       return data;
     },
-    enabled: !!userId,
   });
 };
 
-export const useUsers = () =>{
-    return useQuery({
-        queryKey: ['fetch_users'],
-        queryFn: async () =>{
-            const {data,error} = await dbClient
-                .from('users')
-                .select("*")
-            if (error) throw error;
-            return data ?? []
-        }
-    })
-}
-
 /**
- * useUserUpdate - Updates a user by their userId.
- * @param userId string - the user's unique id to update
- * @returns mutation hook for updating the user
- *
- * Usage:
- *   const updateUser = useUserUpdate(userId)
- *   updateUser.mutate({ name: "New Name", email: "new@somemail.com" })
+ * Update the current user's row. Always scoped to `userId`; the payload cannot
+ * change ownership. Upserts so a missing row is created on first save.
  */
 export const useUserUpdate = (userId: string) => {
-    const queryClient = useQueryClient()
-    return useMutation({
-        mutationKey: ['users_update', userId],
-        mutationFn: async (payload: UserUpdate) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationKey: ["users_update", userId],
+    mutationFn: async (payload: Omit<UserUpdate, "user_id" | "id">) => {
       const { data, error } = await dbClient
-        .from('users')
-        .upsert({ ...payload, user_id: userId }, { onConflict: "user_id" })
-                .select()
-                .single();
-            if (error) throw error;
-            return data;
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["user", userId] });
-          },
-    });
-}
-
-// add create and delete
+        .from("users")
+        .upsert({ ...payload, user_id: userId, updated_at: new Date().toISOString() }, { onConflict: "user_id" })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user", userId] });
+    },
+  });
+};
