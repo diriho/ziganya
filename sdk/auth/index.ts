@@ -50,16 +50,105 @@ export function buildCurrentUserProfile(session: Session | null): CurrentUserPro
 
 export function friendlyAuthError(err: unknown, fallback = "Something went wrong. Please try again."): string {
   const raw = err instanceof Error ? err.message : typeof err === "string" ? err : "";
+  const status = typeof err === "object" && err !== null && "status" in err ? Number((err as { status?: unknown }).status) : undefined;
   const m = raw.toLowerCase();
-  if (!m) return fallback;
+
+  const isGatewayTimeout =
+    status === 504 || status === 502 || status === 503 || m.includes("gateway time-out") || m.includes("gateway timeout") || m.includes("upstream request timeout");
+  if (isGatewayTimeout) {
+    // A 5xx from Supabase's own gateway (Kong) in front of Auth — almost always Supabase's
+    // infrastructure, not this account. Don't guess a specific cause (e.g. email delivery);
+    // point at their status page and the one self-serve fix that resolves most of these.
+    return "Supabase's authentication service isn't responding right now — this is on Supabase's side, not your account. Check https://status.supabase.com/, and if your project is listed as affected, restart it from Project Settings → General → Restart project in the Supabase dashboard, then try again.";
+  }
+  if (!m) return status ? `${fallback} (HTTP ${status})` : fallback;
   if (m.includes("invalid login credentials")) return "Incorrect email or password.";
   if (m.includes("email not confirmed")) return "Please confirm your email address before signing in.";
   if (m.includes("user already registered")) return "An account with this email already exists. Sign in instead.";
   if (m.includes("password should be at least")) return "Password must be at least 6 characters.";
   if (m.includes("unable to validate email") || m.includes("invalid email")) return "Enter a valid email address.";
   if (m.includes("rate limit") || m.includes("too many requests")) return "Too many attempts. Please wait a moment and try again.";
+  if (m.includes("error sending confirmation") || m.includes("error sending") || m.includes("smtp")) {
+    return "Your account may have been created, but the confirmation email couldn't be sent. Check your inbox, or ask the project owner to check Supabase → Authentication → Emails / SMTP.";
+  }
+  if (m.includes("signups not allowed") || m.includes("signup is disabled")) return "New sign-ups are disabled for this project.";
+  if (m.includes("provider is not enabled") || m.includes("unsupported provider")) {
+    return "Google sign-in isn't enabled for this project yet. Enable the Google provider in Supabase → Authentication → Providers.";
+  }
+  if (m.includes("access_denied") || m.includes("access denied") || m.includes("user cancelled") || m.includes("consent")) return "Google sign-in was cancelled.";
+  if (m.includes("code verifier") || m.includes("invalid request: both auth code") || m.includes("pkce")) {
+    return "That sign-in link expired or was opened in a different browser. Please start Google sign-in again from here.";
+  }
+  if (m.includes("redirect") && m.includes("not allowed")) return "This site isn't in the project's allowed redirect URLs. Add it in Supabase → Authentication → URL Configuration.";
   if (m.includes("failed to fetch") || m.includes("network")) return "Network error. Check your connection and try again.";
   return raw;
+}
+
+/* ------------------------------------------------------------------ */
+/* OAuth redirect plumbing                                               */
+/* ------------------------------------------------------------------ */
+
+/** Where the browser returns after Google; must be allow-listed in Supabase URL Configuration. */
+export const OAUTH_CALLBACK_PATH = "/auth/callback";
+const POST_AUTH_REDIRECT_KEY = "ziganya:post-auth-redirect";
+
+/** Remember where to send the user once OAuth completes (survives the round-trip to Google). */
+export function setPostAuthRedirect(path: string): void {
+  try {
+    sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, path.startsWith("/") ? path : "/dashboard");
+  } catch {
+    /* ignore */
+  }
+}
+
+export function consumePostAuthRedirect(): string | null {
+  try {
+    const v = sessionStorage.getItem(POST_AUTH_REDIRECT_KEY);
+    if (v) sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
+    return v;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Read an OAuth error returned in the URL (query or hash), remove it from the
+ * address bar, and return a friendly message. Supabase's client swallows these
+ * during initialization, so the app has to look for them itself.
+ */
+export function consumeAuthRedirectError(): string | null {
+  if (typeof window === "undefined") return null;
+  const url = new URL(window.location.href);
+  const hash = new URLSearchParams(url.hash.startsWith("#") ? url.hash.slice(1) : url.hash);
+  const pick = (k: string) => url.searchParams.get(k) ?? hash.get(k);
+  const error = pick("error");
+  const description = pick("error_description");
+  const code = pick("error_code");
+  if (!error && !description && !code) return null;
+
+  for (const k of ["error", "error_description", "error_code"]) {
+    url.searchParams.delete(k);
+    hash.delete(k);
+  }
+  const rest = hash.toString();
+  url.hash = rest ? `#${rest}` : "";
+  window.history.replaceState(window.history.state, "", url.toString());
+
+  const message = (description ?? error ?? code ?? "").replace(/\+/g, " ");
+  return friendlyAuthError(new Error(message), "Google sign-in failed.");
+}
+
+/**
+ * The Supabase client exchanges the PKCE `?code=` while initializing and keeps
+ * any failure to itself. `initialize()` is idempotent and returns that result.
+ */
+export async function getAuthInitError(): Promise<string | null> {
+  try {
+    const { error } = await dbClient.auth.initialize();
+    return error ? friendlyAuthError(error, "We couldn't complete sign-in.") : null;
+  } catch (err) {
+    return friendlyAuthError(err, "We couldn't complete sign-in.");
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -125,13 +214,17 @@ export interface AuthResult {
   needsConfirmation?: boolean;
 }
 
-export async function signInWithGoogle(redirectPath = "/dashboard"): Promise<{ error: string | null }> {
+export async function signInWithGoogle(destination = "/dashboard"): Promise<{ error: string | null }> {
   try {
-    const redirectTo =
-      typeof window !== "undefined" ? `${window.location.origin}${redirectPath}` : undefined;
+    setPostAuthRedirect(destination);
+    const redirectTo = typeof window !== "undefined" ? `${window.location.origin}${OAUTH_CALLBACK_PATH}` : undefined;
     const { error } = await dbClient.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo },
+      options: {
+        redirectTo,
+        // Always show the account chooser; avoids silently reusing the wrong Google account.
+        queryParams: { prompt: "select_account" },
+      },
     });
     if (error) throw error;
     return { error: null };

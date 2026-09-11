@@ -12,6 +12,7 @@ const CalendarPage = lazy(() => import("@/pages/Calendar").then((m) => ({ defaul
 const SubscriptionPage = lazy(() => import("@/pages/Subscriptions").then((m) => ({ default: m.SubscriptionPage })));
 const SettingsPage = lazy(() => import("@/pages/Settings").then((m) => ({ default: m.SettingsPage })));
 const LogoutPage = lazy(() => import("@/pages/Logout").then((m) => ({ default: m.LogoutPage })));
+const AuthCallbackPage = lazy(() => import("@/pages/AuthCallback").then((m) => ({ default: m.AuthCallbackPage })));
 
 const router = createBrowserRouter([
   {
@@ -34,6 +35,11 @@ const router = createBrowserRouter([
       { path: "subscriptions", element: <SubscriptionPage /> },
       { path: "settings", element: <SettingsPage /> },
     ],
+  },
+  {
+    path: "/auth/callback",
+    element: <AuthCallbackPage />,
+    errorElement: <RouteErrorFallback />,
   },
   {
     path: "/logout",

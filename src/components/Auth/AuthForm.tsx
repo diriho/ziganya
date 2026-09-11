@@ -6,14 +6,24 @@ import { GoogleIcon } from "./GoogleIcon";
 
 type Mode = "signin" | "signup";
 
-export function AuthForm({ onSuccess, initialMode = "signin" }: { onSuccess: () => void; initialMode?: Mode }) {
+export function AuthForm({
+  onSuccess,
+  initialMode = "signin",
+  initialError = null,
+  destination = "/dashboard",
+}: {
+  onSuccess: () => void;
+  initialMode?: Mode;
+  initialError?: string | null;
+  destination?: string;
+}) {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState<"email" | "google" | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initialError);
   const [confirmSent, setConfirmSent] = useState(false);
 
   const submit = async (e: FormEvent) => {
@@ -40,7 +50,7 @@ export function AuthForm({ onSuccess, initialMode = "signin" }: { onSuccess: () 
   const google = async () => {
     setError(null);
     setBusy("google");
-    const { error } = await signInWithGoogle("/dashboard");
+    const { error } = await signInWithGoogle(destination);
     // On success the browser redirects; only errors return here.
     if (error) {
       setError(error);

@@ -24,4 +24,13 @@ if (!supabaseKey || typeof supabaseKey !== "string" || supabaseKey.length < 10) 
   );
 }
 
-export const dbClient = createClient<Database>(supabaseUrl, supabaseKey);
+export const dbClient = createClient<Database>(supabaseUrl, supabaseKey, {
+  auth: {
+    // PKCE keeps OAuth tokens out of the URL, browser history and referrer logs.
+    // The `?code=` returned by Google/Supabase is exchanged for a session on load.
+    flowType: "pkce",
+    detectSessionInUrl: true,
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+});

@@ -55,7 +55,24 @@ Tables (see `sdk/db/database.types.ts`): `users`, `transactions`, `subscriptions
 
 Receipt uploads need a storage bucket named **`receipts`** with a policy that lets authenticated users read/write objects under their own `user_id/` folder. Uploaded files are recorded in `uploads` and processed by the `extract-receipt` Edge Function (see below).
 
-Enable the **Google** provider in Authentication → Providers for one-click sign-in; email/password works out of the box.
+### Google sign-in
+
+1. **Google Cloud Console → APIs & Services → Credentials → OAuth client (Web).** Add this *Authorized redirect URI* (replace the ref with yours):
+   `https://<project-ref>.supabase.co/auth/v1/callback`
+2. **Supabase → Authentication → Providers → Google.** Enable it and paste the Client ID and Client Secret.
+3. **Supabase → Authentication → URL Configuration.** Set *Site URL* to your production URL and add these *Redirect URLs* (wildcards are supported):
+   `http://localhost:5173/**` and `https://<your-site>.netlify.app/**`
+   The app returns to `/auth/callback` (PKCE flow), shows any provider error in the login dialog, and then forwards to the page the user was heading to.
+
+### Email sign-up
+
+Email/password works out of the box. If sign-up fails with a **504** or "error sending confirmation email", Supabase created the auth user but couldn't send the confirmation mail — the built-in mailer is heavily rate-limited and custom SMTP misconfiguration times out. Fix one of:
+
+- **Project Settings → Authentication → SMTP Settings**: configure a real SMTP provider (Resend, Postmark, SES…) and verify the sender.
+- **Authentication → Providers → Email → "Confirm email"**: turn it off for development so accounts are usable immediately.
+- **Authentication → Hooks**: if a *Send Email* hook is configured, make sure its endpoint responds quickly.
+
+Check **Authentication → Logs** for the underlying error. The app maps these failures to a clear message and tells users the account may already exist.
 
 ## Receipt scanning
 

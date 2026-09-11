@@ -17,6 +17,8 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts", "sdk/**/*.test.ts"],
+    // The Supabase client refuses to construct without these; tests never hit the network.
+    env: { VITE_SUPABASE_URL: "http://localhost:54321", VITE_API_KEY: "test-anon-key-not-real-0000" },
   },
   build: {
     sourcemap: false,

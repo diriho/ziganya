@@ -1,21 +1,34 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
-import { useAuth } from "@sdk/auth";
+import { consumeAuthRedirectError, consumePostAuthRedirect, useAuth } from "@sdk/auth";
 import { CallToAction, Features, Footer, Hero, HowItWorks, Nav } from "@/components/Landing";
 import { AuthModal } from "@/components/Auth";
 
 interface LocationState {
-  from?: string;
+  from?: string | null;
+  authError?: string | null;
 }
 
 export default function Home() {
   const navigate = useNavigate();
   const location = useLocation();
   const [params] = useSearchParams();
-  const { session } = useAuth();
-  const [authOpen, setAuthOpen] = useState(() => params.get("login") === "1");
+  const { session, isLoading } = useAuth();
+  const state = (location.state as LocationState | null) ?? null;
 
-  const destination = (location.state as LocationState | null)?.from || "/dashboard";
+  // An OAuth error can arrive via router state (from /auth/callback) or directly in the
+  // URL when Supabase falls back to the Site URL instead of our callback route.
+  const [authError, setAuthError] = useState<string | null>(() => state?.authError ?? consumeAuthRedirectError());
+  const [authOpen, setAuthOpen] = useState(() => params.get("login") === "1" || !!state?.authError || !!authError);
+
+  const destination = state?.from || "/dashboard";
+
+  // If we came back from Google already signed in (Site URL fallback), continue to the app.
+  useEffect(() => {
+    if (isLoading || !session) return;
+    const pending = consumePostAuthRedirect();
+    if (pending) navigate(pending, { replace: true });
+  }, [isLoading, session, navigate]);
 
   const getStarted = () => {
     if (session) navigate(destination);
@@ -37,7 +50,16 @@ export default function Home() {
         <CallToAction onGetStarted={getStarted} isAuthed={!!session} />
       </main>
       <Footer />
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} onSuccess={onAuthed} />
+      <AuthModal
+        open={authOpen}
+        onClose={() => {
+          setAuthOpen(false);
+          setAuthError(null);
+        }}
+        onSuccess={onAuthed}
+        initialError={authError}
+        destination={destination}
+      />
     </div>
   );
 }

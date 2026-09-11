@@ -162,7 +162,13 @@ http.createServer(async (req, res) => {
     return send(res, 200, session());
   }
   if (url.pathname.startsWith("/auth/v1/logout")) return send(res, 204);
-  if (url.pathname.startsWith("/auth/v1/authorize")) return send(res, 400, { error: "OAuth is not available in mock mode — use email sign-in." });
+  if (url.pathname.startsWith("/auth/v1/authorize")) {
+    // Behave like GoTrue when a provider is misconfigured: bounce back to the app with an error.
+    const back = url.searchParams.get("redirect_to") ?? "http://localhost:5173/";
+    const params = new URLSearchParams({ error: "server_error", error_code: "provider_disabled", error_description: "Unsupported provider: provider is not enabled (mock mode — use email sign-in)" });
+    res.writeHead(302, { Location: `${back}#${params.toString()}`, "Access-Control-Allow-Origin": "*" });
+    return res.end();
+  }
   if (url.pathname.startsWith("/functions/v1/extract-receipt")) {
     const body = (await readBody(req).catch(() => null)) ?? {};
     await new Promise((r) => setTimeout(r, 1200)); // feel like a real model call
