@@ -19,7 +19,7 @@ export function AuthCallbackPage() {
     if (handled.current || isLoading) return;
 
     const finish = async () => {
-      // 1) Provider/Supabase sent us back with an explicit error.
+      // 1) Provider/SupaBase sent us back with an explicit error.
       const urlError = consumeAuthRedirectError();
       if (urlError) {
         handled.current = true;
